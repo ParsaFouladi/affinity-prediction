@@ -4,7 +4,7 @@ from Bio.PDB import *
 parser = PDBParser()
 
 # Parse the PDB file
-structure = parser.get_structure("protein", "AF-A0A087XJA9-F1-model_v4.pdb")
+structure = parser.get_structure("protein", "data\AF-A0A087XJA9-F1-model_v4.pdb")
 ppb = PPBuilder()
 pep=ppb.build_peptides(structure)
 seq = pep[0].get_sequence()
@@ -40,7 +40,7 @@ class RedSelect(Select):
 #print(red_atoms)
 io = PDBIO()
 io.set_structure(structure)
-io.save("red_only.pdb", RedSelect())
+io.save("data\\red_only.pdb", RedSelect())
 
 # Iterate over atoms and retrieve B-factors
 # red_atoms = []

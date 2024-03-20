@@ -1,6 +1,6 @@
 from pymol import cmd
 # Load the protein structure file
-cmd.load("AF-A0A087XJA9-F1-model_v4.pdb", "protein")
+cmd.load("data\AF-A0A087XJA9-F1-model_v4.pdb", "protein")
 
 # Find the location of the amino acid "K" in the sequence "KAIEP"
 #k_index = cmd.index("KAIEP", "protein")
@@ -32,4 +32,4 @@ for i in range(lbd_start, cmd.count_atoms("protein") + 1):
 cmd.select("lbd", "id {}-{}".format(lbd_start, lbd_end))
 
 # Save the atoms in the selection to a new PDB file
-cmd.save("lbd_structure.pdb", "lbd")
+cmd.save("data\lbd_structure.pdb", "lbd")
