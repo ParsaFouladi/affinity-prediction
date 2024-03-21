@@ -13,13 +13,18 @@ k_index=seq.find("KAIEP")
 starting_index=k_index-7
 
 class RedSelect(Select):
+    def __init__(self):
+        self.terminate = False
+
     # Accept the risudes with index of higher than starting index and atoms with bfactor higher than threshold
     def accept_residue(self, residue):
-        if residue.get_id()[1] > starting_index:
+        
+        if residue.get_id()[1] > starting_index and not self.terminate:
             #get all the atoms in the residue
             atoms = residue.get_list()
             for atom in atoms:
                 if atom.bfactor < 50:
+                    self.terminate = True
                     return 0
             return 1
                 
