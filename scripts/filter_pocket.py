@@ -1,3 +1,5 @@
+import sys 
+sys.path.append('..')
 from helpers.binding_pocket import BindingPocket
 
 
