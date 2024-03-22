@@ -1,7 +1,7 @@
 from Bio.PDB import *
 
 class BindingPocket:
-    def __init__(self,file_path,output_path,pocket,b_factor_threshold=50):
+    def __init__(self,file_path,output_path,pocket,b_factor_threshold=50,num_atoms_before=0):
         #self.protein = protein
         self.pocket = pocket
         self.num_atoms_before=0
@@ -13,6 +13,7 @@ class BindingPocket:
         self.b_factor_threshold=b_factor_threshold
         self.output_path=output_path
         self.file_path=file_path
+        self.num_atoms_before=num_atoms_before
                 #self.ligand = ligand
 
     def get_pocket(self):
@@ -38,6 +39,7 @@ class BindingPocket:
             target_index=self.seq.find("{}".format(self.pocket))
             starting_index=target_index-self.num_atoms_before
 
+            b_factor_threshold=self.b_factor_threshold
             # Define a custom selection class
             class FilterTarget(Select):
                 def __init__(self):
@@ -50,7 +52,7 @@ class BindingPocket:
                         #get all the atoms in the residue
                         atoms = residue.get_list()
                         for atom in atoms:
-                            if atom.bfactor < self.b_factor_threshold:
+                            if atom.bfactor < b_factor_threshold:
                                 self.terminate = True
                                 return 0
                         return 1
