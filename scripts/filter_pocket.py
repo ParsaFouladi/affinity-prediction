@@ -18,7 +18,7 @@ if len(sys.argv) > 1:
 
     pocket=sys.argv[3]
     #print(onlyfiles)
-
+    file_number=0
     for file in onlyfiles:
         if not file.endswith(".pdb"):
             continue
@@ -26,6 +26,8 @@ if len(sys.argv) > 1:
         binding_pocket=BindingPocket(file_path=mypath+'\\'+file,output_path=f"{output_path}\\"+file,pocket=pocket,b_factor_threshold=0,num_atoms_before=7)
         #find the binding pocket
         binding_pocket.find_binding_pocket()
+        file_number+=1
+        print(f"Processed {file_number} files!")
 
     #create a binding pocket object
     # binding_pocket=BindingPocket(file_path="data\AF-A0A087XJA9-F1-model_v4.pdb",output_path="data\\test_class.pdb",pocket="KAIEP",b_factor_threshold=50,num_atoms_before=7)
