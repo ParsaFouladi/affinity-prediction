@@ -45,7 +45,7 @@ if len(sys.argv) > 1:
         proteins.append(mypath+'\\'+file)
     try:
     # Align the proteins to the reference protein
-        align_proteins(proteins, reference_protein)
+        align_proteins(proteins, reference_protein, output_path)
     except:
         print("An error occurred during protein alignment.")
     
