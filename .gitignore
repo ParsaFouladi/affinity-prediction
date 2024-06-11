@@ -164,4 +164,6 @@ filter_output/
 
 *.pdb
 
+*.pdbqt
+
 *.pse
