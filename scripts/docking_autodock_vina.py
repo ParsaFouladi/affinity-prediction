@@ -32,6 +32,9 @@ print("Number of total pairs: ", len(receptor_files)*len(ligand_files))
 number_of_docked_pairs = 0
 for receptor_file in receptor_files:
     for ligand_file in ligand_files:
+        number_of_docked_pairs += 1
+
+        print('Docking pair %d of %d is started.' % (number_of_docked_pairs, len(receptor_files)*len(ligand_files)))
         # Extract receptor and ligand names
         receptor_name = os.path.splitext(os.path.basename(receptor_file))[0]
         ligand_name = os.path.splitext(os.path.basename(ligand_file))[0]
@@ -57,4 +60,5 @@ for receptor_file in receptor_files:
         output_filename = '{}_{}_vina_out.pdbqt'.format(receptor_name, ligand_name)
         output_filepath = os.path.join(output_folder, output_filename)
         v.write_poses(output_filepath, n_poses=1, overwrite=True)
-        number_of_docked_pairs += 1
+        print('Docking pair %d of %d is finished.' % (number_of_docked_pairs, len(receptor_files)*len(ligand_files)))
+        
