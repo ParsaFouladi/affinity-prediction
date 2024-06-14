@@ -173,3 +173,5 @@ filter_output/
 *.err
 
 *.out
+
+*.mol2
