@@ -14,6 +14,8 @@ def convert_pdb_to_pdbqt(input_pdb_path, output_pdbqt_path):
     chargeModel = openbabel.OBChargeModel.FindType("gasteiger")
     chargeModel.ComputeCharges(mol)
     
+    obConversion.AddOption("r", openbabel.OBConversion.OUTOPTIONS) 
+
     obConversion.WriteFile(mol, output_pdbqt_path)  # Write the PDBQT file
 
 # Get the input folder and output folder adress from the terminal
