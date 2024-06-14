@@ -167,3 +167,9 @@ filter_output/
 *.pdbqt
 
 *.pse
+
+*.log
+
+*.err
+
+*.out
