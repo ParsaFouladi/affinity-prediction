@@ -37,6 +37,10 @@ class BindingPocket:
     def find_binding_pocket(self):
         try:
             target_index=self.seq.find("{}".format(self.pocket))
+            if target_index==-1:
+                print("Pocket not found!")
+                return 0
+
             starting_index=target_index-self.num_atoms_before
 
             b_factor_threshold=self.b_factor_threshold
