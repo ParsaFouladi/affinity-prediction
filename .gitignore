@@ -173,8 +173,7 @@ filter_output/
 *.err
 
 *.out
-<<<<<<< HEAD
+
 
 *.mol2
-=======
->>>>>>> bac5ae1faeeb8751ac12a60f06fd4a77d1e7690e
+
