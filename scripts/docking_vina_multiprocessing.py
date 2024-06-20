@@ -42,7 +42,7 @@ def dock_pair(pair):
         v = Vina(sf_name='vina')
         v.set_receptor(receptor_file)
         v.set_ligand_from_file(ligand_file)
-        v.compute_vina_maps(center=[5, 2, -15], box_size=[35, 35, 35])
+        v.compute_vina_maps(center=[5, 2, -15], box_size=[20, 20, 20])
 
         v.dock(exhaustiveness=32, n_poses=20)
         output_filename = '{}_{}_vina_out.pdbqt'.format(receptor_name, ligand_name)
