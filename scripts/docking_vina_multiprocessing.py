@@ -8,6 +8,8 @@ import logging
 logging.basicConfig(filename='docking_log.log', level=logging.INFO, 
                     format='%(asctime)s %(levelname)s:%(message)s')
 
+
+
 # Define paths to the folders containing receptors and ligands
 receptor_folder = sys.argv[1]
 ligand_folder = sys.argv[2]
@@ -40,7 +42,7 @@ def dock_pair(pair):
         v = Vina(sf_name='vina')
         v.set_receptor(receptor_file)
         v.set_ligand_from_file(ligand_file)
-        v.compute_vina_maps(center=[5, 2, -15], box_size=[35, 35, 35])
+        v.compute_vina_maps(center=[5, 2, -15], box_size=[20, 20, 20])
 
         v.dock(exhaustiveness=32, n_poses=20)
         output_filename = '{}_{}_vina_out.pdbqt'.format(receptor_name, ligand_name)
@@ -57,6 +59,8 @@ if __name__ == "__main__":
     pairs = [(receptor_file, ligand_file, output_folder) for receptor_file in receptor_files for ligand_file in ligand_files]
     num_processes = cpu_count()
     number_of_docked_pairs = 0
+
+    logging.info(f"Total number of CPUs available in this run: {num_processes}")
 
     with Pool(num_processes) as pool:
         for i, result in enumerate(pool.imap_unordered(dock_pair, pairs), 1):
