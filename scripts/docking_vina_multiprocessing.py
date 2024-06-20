@@ -8,6 +8,8 @@ import logging
 logging.basicConfig(filename='docking_log.log', level=logging.INFO, 
                     format='%(asctime)s %(levelname)s:%(message)s')
 
+
+
 # Define paths to the folders containing receptors and ligands
 receptor_folder = sys.argv[1]
 ligand_folder = sys.argv[2]
@@ -57,6 +59,8 @@ if __name__ == "__main__":
     pairs = [(receptor_file, ligand_file, output_folder) for receptor_file in receptor_files for ligand_file in ligand_files]
     num_processes = cpu_count()
     number_of_docked_pairs = 0
+
+    logging.info(f"Total number of CPUs available in this run: {num_processes}")
 
     with Pool(num_processes) as pool:
         for i, result in enumerate(pool.imap_unordered(dock_pair, pairs), 1):
