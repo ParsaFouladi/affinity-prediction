@@ -52,7 +52,7 @@ def get_amino_acid_cordinates(structure_residues):
 
 def get_ligand_cordinates(ligand_mol):
   #ligand_coord = mol2.GetConformer().GetPositions().mean(axis=0)
-  conf = mol.GetConformer()
+  conf = ligand_mol.GetConformer()
   ligand_coords = conf.GetPositions()
   ligand_coord = ligand_coords.mean(axis=0) 
   return ligand_coord
@@ -110,7 +110,7 @@ def molecular_weight(structure_residues,ligand_mol,max_length,residues_to_keep='
         aa_masses.append(ProteinAnalysis(residue.get_resname()).molecular_weight())
     residue_number+=1
 
-  ligand_weight=Descriptors.MolWt(mol)
+  ligand_weight=Descriptors.MolWt(ligand_mol)
 
   final_lst=aa_masses + [ligand_weight]
 
