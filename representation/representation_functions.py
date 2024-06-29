@@ -8,6 +8,7 @@ from rdkit.Chem import Descriptors
 from scipy.spatial.distance import cdist
 from mendeleev import element
 from mendeleev.fetch import fetch_table
+from sklearn.preprocessing import StandardScaler
 
 try:
   #Add logging here
@@ -156,3 +157,11 @@ def vdw_radius_mol(structure_residues,ligand_mol,van_dict,max_length,residues_to
 def stack_all(d_matrix,w_matrx,v_radius):
   return np.stack([d_matrix,w_matrx,v_radius],axis=-1)
 
+
+def normalize_data(stacked_array):
+  all_channels=stacked_array.copy()
+# Normalize each channel separately
+  for i in range(all_channels.shape[-1]):  # Iterate over channels
+    scaler = StandardScaler()
+    all_channels[:, :, i] = scaler.fit_transform(all_channels[:, :, i])
+  return all_channels
