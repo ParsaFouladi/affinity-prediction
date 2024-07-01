@@ -10,38 +10,6 @@ from mendeleev import element
 from mendeleev.fetch import fetch_table
 from sklearn.preprocessing import StandardScaler
 
-try:
-  #Add logging here
-  ptable = fetch_table("elements")
-  cols = ["symbol",
-      "vdw_radius"
-  ]
-  ptable=ptable[cols]
-  ptable.dropna(inplace=True)
-  van_dict=ptable.set_index('symbol').T.to_dict('index')['vdw_radius']
-except:
-  #Add logging here
-  van_dict={'H': 319.5,
- 'B': 401.99999999999994,
- 'C': 389.83,
- 'N': 366.21000000000004,
- 'O': 340.46,
- 'F': 347.2,
- 'Al': 438.99999999999994,
- 'Si': 426.99999999999994,
- 'P': 415.00000000000006,
- 'S': 403.0,
- 'Cl': 395.03,
- 'Ga': 438.99999999999994,
- 'Ge': 426.99999999999994,
- 'As': 415.00000000000006,
- 'Se': 403.0,
- 'Br': 395.0,
- 'In': 459.0,
- 'Sn': 447.0,
- 'Sb': 434.99999999999994,
- 'Te': 423.00000000000006,
- 'I': 415.00000000000006}
 
 def get_amino_acid_cordinates(structure_residues):
   aa_coords_geo = [residue.center_of_mass(geometric=True) for residue in structure_residues if residue.get_resname()!='HOH']
