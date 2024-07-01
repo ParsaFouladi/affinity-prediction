@@ -10,6 +10,14 @@ from mendeleev import element
 from mendeleev.fetch import fetch_table
 from sklearn.preprocessing import StandardScaler
 
+def get_protein_structure(protein_path):
+  parser = PDBParser()
+  structure = parser.get_structure("protein", f"{protein_path}")
+  return structure
+
+def get_ligand_structure(ligand_path):
+  ligand_mol = Chem.MolFromMol2File(ligand_path)
+  return ligand_mol
 
 def get_amino_acid_cordinates(structure_residues):
   aa_coords_geo = [residue.center_of_mass(geometric=True) for residue in structure_residues if residue.get_resname()!='HOH']
