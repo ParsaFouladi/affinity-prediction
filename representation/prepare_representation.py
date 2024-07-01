@@ -5,14 +5,12 @@ import pandas as pd
 from mendeleev.fetch import fetch_table
 import logging
 import re
+import h5py
 
 #Initialize logger
 logging.basicConfig(filename='representation_log.log', level=logging.INFO, 
                     format='%(asctime)s %(levelname)s:%(message)s')
 try:
-  #Add logging here
-  
-
   ptable = fetch_table("elements")
   cols = ["symbol",
       "vdw_radius"
@@ -22,7 +20,6 @@ try:
   van_dict=ptable.set_index('symbol').T.to_dict('index')['vdw_radius']
   logging.info("Fetched van der Waals radii from Mendeleev database")
 except:
-  #Add logging here
   van_dict={'H': 110.00000000000001,'He': 140.0,'Li': 182.0,'Be': 153.0,'B': 192.0,'C': 170.0,'N': 155.0,'O': 152.0,'F': 147.0,'Ne': 154.0,'Na': 227.0,'Mg': 173.0,
  'Al': 184.0,'Si': 210.0,'P': 180.0,'S': 180.0,'Cl': 175.0,'Ar': 188.0,'K': 275.0,'Ca': 231.0,'Sc': 215.0,'Ti': 211.0,'V': 206.99999999999997,'Cr': 206.0,'Mn': 204.99999999999997,
  'Fe': 204.0,'Co': 200.0,'Ni': 197.0,'Cu': 196.0,'Zn': 200.99999999999997,'Ga': 187.0,'Ge': 211.0,'As': 185.0,'Se': 190.0,'Br': 185.0,'Kr': 202.0,'Rb': 303.0,'Sr': 249.00000000000003,
@@ -62,8 +59,70 @@ def get_binding_affinity_info(pdb_code, df):
 
     # get the resoltion of the structure
     resolution = float(df[df['PDB code'] == pdb_code]['resolution'].values[0])
+
+    p_binding_affinity = binding_affinity = float(df[df['PDB code'] == pdb_code]['log'].values[0])
   except Exception as e:
     logging.error(f"Error getting binding affinity for {pdb_code} - {e}")
     sys.exit(1)
-  return binding_affinity, binding_unit, binding_type, resolution
+  return binding_affinity, binding_unit, binding_type, resolution, p_binding_affinity
+
+def save_representations_to_h5(data, pdb_code, binding_information, max_length=400,h5_file_path="representations.h5"):
+    """Saves protein-ligand representations and binding affinity to an HDF5 file."""
+    with h5py.File(h5_file_path, "a") as f: 
+        group_name = f"{pdb_code}"
+
+        if group_name in f:
+            del f[group_name]  
+
+        group = f.create_group(group_name)
+        group.create_dataset("representation", data=data)
+        group.attrs["binding_affinity"] = binding_information['binding_affinity']
+        group.attrs["binding_unit"] = binding_information['binding_unit']
+        group.attrs["binding_type"] = binding_information['binding_type']
+        group.attrs["resolution"] = binding_information['resolution']
+        group.attrs["p_binding_affinity"] = binding_information['p_binding_affinity']
+
+def create_representation(pdb_code, protein_path,ligand_path, max_length=400):
+  #Read the protein file
+  protein_structure = get_protein_structure(protein_path)
+  protein_residues = protein_structure.get_residues()
+
+  #Read the ligand file
+  ligand_mol = get_ligand_structure(ligand_path)
+
+  #Get the amino acid and ligand coordinates
+  protein_coords = get_amino_acid_cordinates(protein_structure.get_residues())
+  lignad_coords=get_ligand_cordinates(ligand_mol)
+
+  #Get the number of amino acids in the protein to see if we need to truncate or pad
+  number_of_aa=protein_coords.shape[0]
+
+  if number_of_aa>400:
+    residues_to_keep=truncation(protein_coords,lignad_coords,max_length=max_length)
+    d_matrix=distance_matrix(protein_coords,lignad_coords,max_length=max_length,residues_to_keep=residues_to_keep)
+    w_matrix=molecular_weight(protein_residues,ligand_mol,max_length=max_length,residues_to_keep=residues_to_keep)
+    v_matrix=vdw_radius_mol(protein_residues,ligand_mol,van_dict,max_length=max_length,residues_to_keep=residues_to_keep)
+  elif number_of_aa<400:
+    residues_to_keep='all'
+    d_matrix=padding(distance_matrix(protein_coords,lignad_coords,max_length=max_length,residues_to_keep=residues_to_keep))
+    w_matrix=padding(molecular_weight(protein_residues,ligand_mol,max_length=max_length,residues_to_keep=residues_to_keep))
+    v_matrix=padding(vdw_radius_mol(protein_residues,ligand_mol,van_dict,max_length=max_length,residues_to_keep=residues_to_keep))
+  else:
+    residues_to_keep='all'
+    d_matrix=distance_matrix(protein_coords,lignad_coords,max_length=max_length,residues_to_keep=residues_to_keep)
+    w_matrix=molecular_weight(protein_residues,ligand_mol,max_length=max_length,residues_to_keep=residues_to_keep)
+    v_matrix=vdw_radius_mol(protein_residues,ligand_mol,van_dict,max_length=max_length,residues_to_keep=residues_to_keep)
+  
+  stacked_matrix=np.stack((d_matrix,w_matrix,v_matrix),axis=-1)
+
+  final_matrix=normalize_data(stacked_matrix)
+  return final_matrix
+  
+  
+
+
+
+
+
+
 
