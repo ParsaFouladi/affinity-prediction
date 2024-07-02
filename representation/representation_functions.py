@@ -75,7 +75,8 @@ def distance_matrix(protein_coords,ligand_coord,protein_size,residues_to_keep='a
   return distances_matrix
 
 
-def molecular_weight(structure_residues,ligand_mol,protein_size,residues_to_keep='all'):
+def molecular_weight(structure,ligand_mol,protein_size,residues_to_keep='all'):
+  structure_residues = structure.get_residues()
   matrix_length=protein_size+1
 
   aa_masses = []
@@ -100,7 +101,8 @@ def molecular_weight(structure_residues,ligand_mol,protein_size,residues_to_keep
 
   return mass_channel
 
-def vdw_radius_mol(structure_residues,ligand_mol,van_dict,protein_size,residues_to_keep='all'):
+def vdw_radius_mol(structure,ligand_mol,van_dict,protein_size,residues_to_keep='all'):
+  structure_residues = structure.get_residues()
   matrix_length=protein_size+1
   aa_vdw_radii = []
   if isinstance(residues_to_keep, str) and residues_to_keep=='all':

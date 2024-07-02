@@ -85,7 +85,7 @@ def save_representations_to_h5(data, pdb_code, binding_information, max_length=4
 def create_representation(pdb_code, protein_path,ligand_path, max_length=400):
   #Read the protein file
   protein_structure = get_protein_structure(protein_path)
-  protein_residues = protein_structure.get_residues()
+  #protein_residues = protein_structure.get_residues()
 
   #Read the ligand file
   ligand_mol = get_ligand_structure(ligand_path)
@@ -100,18 +100,18 @@ def create_representation(pdb_code, protein_path,ligand_path, max_length=400):
   if number_of_aa>400:
     residues_to_keep=truncation(protein_coords,lignad_coords,max_length=max_length)
     d_matrix=distance_matrix(protein_coords,lignad_coords,protein_size=max_length,residues_to_keep=residues_to_keep)
-    w_matrix=molecular_weight(protein_residues,ligand_mol,protein_size=max_length,residues_to_keep=residues_to_keep)
-    v_matrix=vdw_radius_mol(protein_residues,ligand_mol,van_dict,protein_size=max_length,residues_to_keep=residues_to_keep)
+    w_matrix=molecular_weight(protein_structure,ligand_mol,protein_size=max_length,residues_to_keep=residues_to_keep)
+    v_matrix=vdw_radius_mol(protein_structure,ligand_mol,van_dict,protein_size=max_length,residues_to_keep=residues_to_keep)
   elif number_of_aa<400:
     residues_to_keep='all'
     d_matrix=padding(distance_matrix(protein_coords,lignad_coords,protein_size=number_of_aa,residues_to_keep=residues_to_keep),max_length+1)
-    w_matrix=padding(molecular_weight(protein_residues,ligand_mol,protein_size=number_of_aa,residues_to_keep=residues_to_keep),max_length+1)
-    v_matrix=padding(vdw_radius_mol(protein_residues,ligand_mol,van_dict,protein_size=number_of_aa,residues_to_keep=residues_to_keep),max_length+1)
+    w_matrix=padding(molecular_weight(protein_structure,ligand_mol,protein_size=number_of_aa,residues_to_keep=residues_to_keep),max_length+1)
+    v_matrix=padding(vdw_radius_mol(protein_structure,ligand_mol,van_dict,protein_size=number_of_aa,residues_to_keep=residues_to_keep),max_length+1)
   else:
     residues_to_keep='all'
     d_matrix=distance_matrix(protein_coords,lignad_coords,protein_size=max_length,residues_to_keep=residues_to_keep)
-    w_matrix=molecular_weight(protein_residues,ligand_mol,protein_size=max_length,residues_to_keep=residues_to_keep)
-    v_matrix=vdw_radius_mol(protein_residues,ligand_mol,van_dict,protein_size=max_length,residues_to_keep=residues_to_keep)
+    w_matrix=molecular_weight(protein_structure,ligand_mol,protein_size=max_length,residues_to_keep=residues_to_keep)
+    v_matrix=vdw_radius_mol(protein_structure,ligand_mol,van_dict,protein_size=max_length,residues_to_keep=residues_to_keep)
   
   stacked_matrix=np.stack((d_matrix,w_matrix,v_matrix),axis=-1)
 
