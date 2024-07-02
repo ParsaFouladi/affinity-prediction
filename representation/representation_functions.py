@@ -84,7 +84,7 @@ def molecular_weight(structure,ligand_mol,protein_size,residues_to_keep='all'):
     residues_to_keep=range(protein_size)
   residue_number=0
   for residue in structure_residues:
-    if residue.get_resname() !='HOH' and residue_number in residues_to_keep:
+    if residue.id[0] in [" ", "H"] and residue_number in residues_to_keep:
         aa_masses.append(ProteinAnalysis(residue.get_resname()).molecular_weight())
     residue_number+=1
 
@@ -109,7 +109,7 @@ def vdw_radius_mol(structure,ligand_mol,van_dict,protein_size,residues_to_keep='
     residues_to_keep=range(protein_size)
   residue_number=0
   for residue in structure_residues :
-    if residue.get_resname() !='HOH' and residue_number in residues_to_keep:
+    if residue.id[0] in [" ", "H"] and residue_number in residues_to_keep:
         atoms = [atom.element for atom in residue.get_atoms()]
         #print(atoms)
         radii = [van_dict[atom] for atom in atoms]
