@@ -63,10 +63,10 @@ def truncation(protein_coords,ligand_coords,max_length):
   residues_to_keep.sort()
   return residues_to_keep
 
-def distance_matrix(protein_coords,ligand_coord,max_length,residues_to_keep='all'):
-  matrix_size=max_length+1
+def distance_matrix(protein_coords,ligand_coord,protein_size,residues_to_keep='all'):
+
   if isinstance(residues_to_keep, str) and residues_to_keep=='all':
-    residues_to_keep=range(matrix_size)
+    residues_to_keep=range(protein_size)
   
   aa_coords_to_keep = [protein_coords[i] for i in residues_to_keep]
   all_cordinates=aa_coords_to_keep+[ligand_coord]
@@ -75,12 +75,12 @@ def distance_matrix(protein_coords,ligand_coord,max_length,residues_to_keep='all
   return distances_matrix
 
 
-def molecular_weight(structure_residues,ligand_mol,max_length,residues_to_keep='all'):
-  matrix_length=max_length+1
+def molecular_weight(structure_residues,ligand_mol,protein_size,residues_to_keep='all'):
+  matrix_length=protein_size+1
 
   aa_masses = []
   if isinstance(residues_to_keep, str) and residues_to_keep=='all':
-    residues_to_keep=range(matrix_length)
+    residues_to_keep=range(protein_size)
   residue_number=0
   for residue in structure_residues:
     if residue.get_resname() !='HOH' and residue_number in residues_to_keep:
@@ -100,9 +100,11 @@ def molecular_weight(structure_residues,ligand_mol,max_length,residues_to_keep='
 
   return mass_channel
 
-def vdw_radius_mol(structure_residues,ligand_mol,van_dict,max_length,residues_to_keep='all'):
-  matrix_length=max_length+1
+def vdw_radius_mol(structure_residues,ligand_mol,van_dict,protein_size,residues_to_keep='all'):
+  matrix_length=protein_size+1
   aa_vdw_radii = []
+  if isinstance(residues_to_keep, str) and residues_to_keep=='all':
+    residues_to_keep=range(protein_size)
   residue_number=0
   for residue in structure_residues :
     if residue.get_resname() !='HOH' and residue_number in residues_to_keep:

@@ -30,7 +30,7 @@ except:
  'Po': 197.0,'At': 202.0,'Rn': 220.00000000000003,'Fr': 348.0,'Ra': 283.0,'Ac': 247.00000000000003,'Th': 245.00000000000003,'Pa': 243.00000000000003,'U': 241.0,'Np': 239.0,
  'Pu': 243.00000000000003,'Am': 244.0,'Cm': 245.00000000000003,'Bk': 244.0,'Cf': 245.00000000000003,'Es': 245.00000000000003,'Fm': 245.00000000000003,'Md': 246.0,'No': 246.0,'Lr': 246.0}
 
-logging.info("Used default van der Waals radii")
+  logging.info("Used default van der Waals radii")
 
 # read the csv file
 def read_csv_file(file_path):
@@ -99,27 +99,71 @@ def create_representation(pdb_code, protein_path,ligand_path, max_length=400):
 
   if number_of_aa>400:
     residues_to_keep=truncation(protein_coords,lignad_coords,max_length=max_length)
-    d_matrix=distance_matrix(protein_coords,lignad_coords,max_length=max_length,residues_to_keep=residues_to_keep)
-    w_matrix=molecular_weight(protein_residues,ligand_mol,max_length=max_length,residues_to_keep=residues_to_keep)
-    v_matrix=vdw_radius_mol(protein_residues,ligand_mol,van_dict,max_length=max_length,residues_to_keep=residues_to_keep)
+    d_matrix=distance_matrix(protein_coords,lignad_coords,protein_size=max_length,residues_to_keep=residues_to_keep)
+    w_matrix=molecular_weight(protein_residues,ligand_mol,protein_size=max_length,residues_to_keep=residues_to_keep)
+    v_matrix=vdw_radius_mol(protein_residues,ligand_mol,van_dict,protein_size=max_length,residues_to_keep=residues_to_keep)
   elif number_of_aa<400:
     residues_to_keep='all'
-    d_matrix=padding(distance_matrix(protein_coords,lignad_coords,max_length=max_length,residues_to_keep=residues_to_keep))
-    w_matrix=padding(molecular_weight(protein_residues,ligand_mol,max_length=max_length,residues_to_keep=residues_to_keep))
-    v_matrix=padding(vdw_radius_mol(protein_residues,ligand_mol,van_dict,max_length=max_length,residues_to_keep=residues_to_keep))
+    d_matrix=padding(distance_matrix(protein_coords,lignad_coords,protein_size=number_of_aa,residues_to_keep=residues_to_keep),max_length)
+    w_matrix=padding(molecular_weight(protein_residues,ligand_mol,protein_size=number_of_aa,residues_to_keep=residues_to_keep),max_length)
+    v_matrix=padding(vdw_radius_mol(protein_residues,ligand_mol,van_dict,protein_size=number_of_aa,residues_to_keep=residues_to_keep),max_length)
   else:
     residues_to_keep='all'
-    d_matrix=distance_matrix(protein_coords,lignad_coords,max_length=max_length,residues_to_keep=residues_to_keep)
-    w_matrix=molecular_weight(protein_residues,ligand_mol,max_length=max_length,residues_to_keep=residues_to_keep)
-    v_matrix=vdw_radius_mol(protein_residues,ligand_mol,van_dict,max_length=max_length,residues_to_keep=residues_to_keep)
+    d_matrix=distance_matrix(protein_coords,lignad_coords,protein_size=max_length,residues_to_keep=residues_to_keep)
+    w_matrix=molecular_weight(protein_residues,ligand_mol,protein_size=max_length,residues_to_keep=residues_to_keep)
+    v_matrix=vdw_radius_mol(protein_residues,ligand_mol,van_dict,protein_size=max_length,residues_to_keep=residues_to_keep)
   
   stacked_matrix=np.stack((d_matrix,w_matrix,v_matrix),axis=-1)
 
   final_matrix=normalize_data(stacked_matrix)
   return final_matrix
-  
-  
 
+# Now we will write a function that goes over each protein-ligand folder and creates the representation
+def create_representations(data_path, binding_data_path,max_length=400):
+  # Read the csv file
+  df = read_csv_file(binding_data_path)
+  logging.info("Read the csv file!")
+
+  # Get the list of folders in the data path
+  folders = os.listdir(data_path)
+  logging.info("Got the list of folders!")
+  logging.info(f"Number of folders: {len(folders)}")
+
+  count = 0
+  for folder in folders:
+    count += 1
+    logging.info(f"Processing folder {count}/{len(folders)} - {folder}")
+    
+    try:
+      # Get the protein and ligand file paths
+      protein_path = os.path.join(data_path, folder, f"{folder}_protein.pdb")
+      ligand_path = os.path.join(data_path, folder, f"{folder}_ligand.mol2")
+
+      # Get the binding affinity information
+      binding_affinity, binding_unit, binding_type, resolution, p_binding_affinity = get_binding_affinity_info(folder, df)
+
+      # Create the representation
+      representation = create_representation(folder, protein_path, ligand_path, max_length)
+
+      # Save the representation to an HDF5 file
+      save_representations_to_h5(representation, folder, {
+          'binding_affinity': binding_affinity,
+          'binding_unit': binding_unit,
+          'binding_type': binding_type,
+          'resolution': resolution,
+          'p_binding_affinity': p_binding_affinity
+      })
+      logging.info(f"Representation created for {count}/{len(folders)} - {folder}")
+    except Exception as e:
+      logging.error(f"Error processing folder {count}/{len(folders)} - {folder} - {e}")
+# Get the data path from the command line
+if len(sys.argv) < 2:
+  logging.error("Please provide the data path")
+  sys.exit(1)
+
+data_path = sys.argv[1]
+binding_data_path = sys.argv[2]
+create_representations(data_path, binding_data_path)
 
 
 
