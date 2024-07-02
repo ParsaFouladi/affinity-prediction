@@ -140,6 +140,12 @@ def normalize_data(stacked_array):
   all_channels=stacked_array.copy()
 # Normalize each channel separately
   for i in range(all_channels.shape[-1]):  # Iterate over channels
-    scaler = StandardScaler()
-    all_channels[:, :, i] = scaler.fit_transform(all_channels[:, :, i])
+    if i==0:
+      scaler = StandardScaler()
+      all_channels[:, :, i] = scaler.fit_transform(all_channels[:, :, i])
+    else:
+      diag_values = all_channels[:, :, i].diagonal()  # Extract diagonal
+      scaler = StandardScaler()
+      normalized_diag = scaler.fit_transform(diag_values.reshape(-1, 1)).flatten()  # Normalize
+      np.fill_diagonal(all_channels[:, :, i], normalized_diag)
   return all_channels

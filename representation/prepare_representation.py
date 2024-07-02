@@ -104,9 +104,9 @@ def create_representation(pdb_code, protein_path,ligand_path, max_length=400):
     v_matrix=vdw_radius_mol(protein_residues,ligand_mol,van_dict,protein_size=max_length,residues_to_keep=residues_to_keep)
   elif number_of_aa<400:
     residues_to_keep='all'
-    d_matrix=padding(distance_matrix(protein_coords,lignad_coords,protein_size=number_of_aa,residues_to_keep=residues_to_keep),max_length)
-    w_matrix=padding(molecular_weight(protein_residues,ligand_mol,protein_size=number_of_aa,residues_to_keep=residues_to_keep),max_length)
-    v_matrix=padding(vdw_radius_mol(protein_residues,ligand_mol,van_dict,protein_size=number_of_aa,residues_to_keep=residues_to_keep),max_length)
+    d_matrix=padding(distance_matrix(protein_coords,lignad_coords,protein_size=number_of_aa,residues_to_keep=residues_to_keep),max_length+1)
+    w_matrix=padding(molecular_weight(protein_residues,ligand_mol,protein_size=number_of_aa,residues_to_keep=residues_to_keep),max_length+1)
+    v_matrix=padding(vdw_radius_mol(protein_residues,ligand_mol,van_dict,protein_size=number_of_aa,residues_to_keep=residues_to_keep),max_length+1)
   else:
     residues_to_keep='all'
     d_matrix=distance_matrix(protein_coords,lignad_coords,protein_size=max_length,residues_to_keep=residues_to_keep)
