@@ -9,6 +9,11 @@ from scipy.spatial.distance import cdist
 from mendeleev import element
 from mendeleev.fetch import fetch_table
 from sklearn.preprocessing import StandardScaler
+import warnings
+
+# Filter out specific PDBConstructionWarnings
+warnings.filterwarnings("ignore", message="Ignoring unrecognized record 'END'")
+warnings.filterwarnings("ignore", message="Ignoring unrecognized record 'TER'")
 
 def get_protein_structure(protein_path):
   parser = PDBParser()

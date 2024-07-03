@@ -82,7 +82,7 @@ def save_representations_to_h5(data, pdb_code, binding_information, max_length=4
         group.attrs["resolution"] = binding_information['resolution']
         group.attrs["p_binding_affinity"] = binding_information['p_binding_affinity']
 
-def create_representation(pdb_code, protein_path,ligand_path, max_length=400):
+def create_representation(pdb_code, protein_path,ligand_path, max_length=400,outlier_threshold=1000):
   #Read the protein file
   protein_structure = get_protein_structure(protein_path)
   #protein_residues = protein_structure.get_residues()
@@ -96,6 +96,11 @@ def create_representation(pdb_code, protein_path,ligand_path, max_length=400):
 
   #Get the number of amino acids in the protein to see if we need to truncate or pad
   number_of_aa=protein_coords.shape[0]
+
+  #Ignore the proteins that have more than 1000 amino acids
+  if outlier_threshold>1000:
+    logging.info(f"Protein {pdb_code} has more than 1000 amino acids. Skipping...")
+    return None
 
   if number_of_aa>400:
     residues_to_keep=truncation(protein_coords,lignad_coords,max_length=max_length)
