@@ -34,8 +34,10 @@ except:
 
 # read the csv file
 def read_csv_file(file_path):
+  # Define the correct column names
+  correct_column_names = ['PDB_code', 'resolution', 'release_year', '-logKd/Ki', 'Kd/Ki', 'separator', 'reference', 'ligand_name']
   try:
-    df = pd.read_csv(file_path)
+    df = pd.read_csv(file_path, delim_whitespace=True, comment='#', skiprows=6, header=None, names=correct_column_names)
   except Exception as e:
     logging.error(f"Error reading file: {file_path} - {e}")
     sys.exit(1)
@@ -49,22 +51,24 @@ def get_binding_affinity_info(pdb_code, df):
     # We are looking for a number followed by a unit (uM, nM, mM, pM, M) and the type of the binding affinity (Ki, Kd)
     
     # First we need to get the binding affinity value
-    binding_affinity = float(re.search(r'(\d+\.?\d*)', df[df['PDB code'] == pdb_code]['binding data'].values[0])[0])
+    binding_affinity = float(re.search(r'(\d+\.?\d*)', df[df['PDB_code'] == pdb_code]['Kd/Ki'].values[0])[0])
 
     # Next we need to get the unit of the binding affinity
-    binding_unit = re.search(r'(uM|nM|mM|pM|M)', df[df['PDB code'] == pdb_code]['binding data'].values[0])[0]
+    binding_unit = re.search(r'(uM|nM|mM|pM|M)', df[df['PDB_code'] == pdb_code]['Kd/Ki'].values[0])[0]
 
     # Finally we need to get the type of the binding affinity
-    binding_type = re.search(r'(Ki|Kd)', df[df['PDB code'] == pdb_code]['binding data'].values[0])[0]
+    binding_type = re.search(r'(Ki|Kd)', df[df['PDB_code'] == pdb_code]['Kd/Ki'].values[0])[0]
 
     # get the resoltion of the structure
-    resolution = float(df[df['PDB code'] == pdb_code]['resolution'].values[0])
+    resolution = float(df[df['PDB_code'] == pdb_code]['resolution'].values[0])
 
-    p_binding_affinity = binding_affinity = float(df[df['PDB code'] == pdb_code]['log'].values[0])
+    p_binding_affinity = binding_affinity = float(df[df['PDB_code'] == pdb_code]['-logKd/Ki'].values[0])
+
+    ligand_name = df[df['PDB_code'] == pdb_code]['ligand_name'].values[0]
   except Exception as e:
     logging.error(f"Error getting binding affinity for {pdb_code} - {e}")
     sys.exit(1)
-  return binding_affinity, binding_unit, binding_type, resolution, p_binding_affinity
+  return binding_affinity, binding_unit, binding_type, resolution, p_binding_affinity, ligand_name
 
 def save_representations_to_h5(data, pdb_code, binding_information, max_length=400,h5_file_path="representations.h5"):
     """Saves protein-ligand representations and binding affinity to an HDF5 file."""
@@ -76,11 +80,13 @@ def save_representations_to_h5(data, pdb_code, binding_information, max_length=4
 
         group = f.create_group(group_name)
         group.create_dataset("representation", data=data)
+        group.attrs["pdb_code"] = pdb_code
         group.attrs["binding_affinity"] = binding_information['binding_affinity']
         group.attrs["binding_unit"] = binding_information['binding_unit']
         group.attrs["binding_type"] = binding_information['binding_type']
         group.attrs["resolution"] = binding_information['resolution']
         group.attrs["p_binding_affinity"] = binding_information['p_binding_affinity']
+        group.attrs["ligand_name"] = binding_information['ligand_name']
 
 def create_representation(pdb_code, protein_path,ligand_path, max_length=400,outlier_threshold=1000):
   #Read the protein file
@@ -145,7 +151,7 @@ def create_representations(data_path, binding_data_path,max_length=400):
       ligand_path = os.path.join(data_path, folder, f"{folder}_ligand.mol2")
 
       # Get the binding affinity information
-      binding_affinity, binding_unit, binding_type, resolution, p_binding_affinity = get_binding_affinity_info(folder, df)
+      binding_affinity, binding_unit, binding_type, resolution, p_binding_affinity, ligand_name = get_binding_affinity_info(folder, df)
 
       # Create the representation
       representation = create_representation(folder, protein_path, ligand_path, max_length)
@@ -156,7 +162,8 @@ def create_representations(data_path, binding_data_path,max_length=400):
           'binding_unit': binding_unit,
           'binding_type': binding_type,
           'resolution': resolution,
-          'p_binding_affinity': p_binding_affinity
+          'p_binding_affinity': p_binding_affinity,
+          'ligand_name': ligand_name
       })
       logging.info(f"Representation created for {count}/{len(folders)} - {folder}")
     except Exception as e:
