@@ -3,9 +3,8 @@
 #SBATCH --job-name=docking_job           # Job name
 #SBATCH --output=docking_job_%j.out      # Standard output log
 #SBATCH --error=docking_job_%j.err       # Standard error log
-#SBATCH --nodes=1                        # Number of nodes
-#SBATCH --ntasks=1                       # Number of tasks (processes)
-#SBATCH --cpus-per-task=40               # Number of CPU cores per task
+#SBATCH --ntasks-per-node=40     # Tasks per node
+#SBATCH --nodes=2                # Number of nodes requested
 #SBATCH --mem=1G                       # Total memory per node
 #SBATCH --partition=batch                # Partition name
 
