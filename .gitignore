@@ -179,3 +179,5 @@ filter_output/
 
 *.h5
 refined_data.2020
+
+*.sdf

@@ -38,8 +38,8 @@ class BindingPocket:
         try:
             target_index=self.seq.find("{}".format(self.pocket))
             if target_index==-1:
-                print("Pocket not found!")
-                return 0
+                
+                return -1
 
             starting_index=target_index-self.num_atoms_before
 
