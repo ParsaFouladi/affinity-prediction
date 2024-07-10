@@ -181,3 +181,8 @@ filter_output/
 refined_data.2020
 
 *.sdf
+
+env_*
+modelling/gpu_test.py
+
+*.hdf
