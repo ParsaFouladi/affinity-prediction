@@ -15,9 +15,9 @@
 # source /path/to/venv/bin/activate  # Uncomment and adjust if necessary
 source activate vina
 # Define paths (replace with your actual paths)
-RECEPTOR_FOLDER="/mainfs/home/mk6n23/src_parsa/scripts/filter_output/new_alignment_output/test_parsa/"
+RECEPTOR_FOLDER="/mainfs/home/mk6n23/new_enviroment_parsa/data/mr_proteins_filtered/"
 LIGAND_FOLDER="/mainfs/home/mk6n23/mkdata/mol2_files/new_ligands/pdbqt_version/"
-OUTPUT_FOLDER="/mainfs/home/mk6n23/mkdata/docked_complexes/job_test"
+OUTPUT_FOLDER="/mainfs/home/mk6n23/mkdata/docked_complexes/mr_results2"
 
 # Run the Python script
 python3 docking_vina_multiprocessing.py $RECEPTOR_FOLDER $LIGAND_FOLDER $OUTPUT_FOLDER
