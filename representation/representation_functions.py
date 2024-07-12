@@ -10,6 +10,7 @@ from mendeleev import element
 from mendeleev.fetch import fetch_table
 from sklearn.preprocessing import StandardScaler
 import warnings
+import scipy.sparse as sp
 
 # Filter out specific PDBConstructionWarnings
 warnings.filterwarnings("ignore", message="Ignoring unrecognized record 'END'")
@@ -236,6 +237,10 @@ def stack_all(d_matrix, w_matrix, v_radius):
     Returns:
         np.ndarray: Stacked matrix.
     """
+    # Convert diagonal channels to sparse matrices (CSR format)
+    w_matrix = sp.csr_matrix(w_matrix)
+    v_radius = sp.csr_matrix(v_radius)
+
     return np.stack([d_matrix, w_matrix, v_radius], axis=-1)
 
 def normalize_data(stacked_array):
@@ -251,14 +256,21 @@ def normalize_data(stacked_array):
     """
     all_channels = stacked_array.copy()
     for i in range(all_channels.shape[-1]):  # Iterate over channels
-        if i == 0:
-            scaler = StandardScaler()
-            all_channels[:, :, i] = scaler.fit_transform(all_channels[:, :, i])
-        else:
-            diag_values = all_channels[:, :, i].diagonal()  # Extract diagonal
-            scaler = StandardScaler()
-            normalized_diag = scaler.fit_transform(diag_values.reshape(-1, 1)).flatten()  # Normalize
-            np.fill_diagonal(all_channels[:, :, i], normalized_diag)
+        # Create Mask (Assuming 0 is used for padding)
+        mask = all_channels[:, :, i] != 0
+
+        # Apply StandardScaler (or any other normalization method)
+        scaler = StandardScaler()
+        all_channels[:, :, i][mask] = scaler.fit_transform(all_channels[:, :, i][mask].reshape(-1, 1)).flatten()
+
+        # if i == 0:
+        #     scaler = StandardScaler()
+        #     all_channels[:, :, i] = scaler.fit_transform(all_channels[:, :, i])
+        # else:
+        #     diag_values = all_channels[:, :, i].diagonal()  # Extract diagonal
+        #     scaler = StandardScaler()
+        #     normalized_diag = scaler.fit_transform(diag_values.reshape(-1, 1)).flatten()  # Normalize
+        #     np.fill_diagonal(all_channels[:, :, i], normalized_diag)
     # convert to float32
     all_channels = all_channels.astype(np.float32)
     return all_channels
