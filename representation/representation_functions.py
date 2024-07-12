@@ -259,4 +259,6 @@ def normalize_data(stacked_array):
             scaler = StandardScaler()
             normalized_diag = scaler.fit_transform(diag_values.reshape(-1, 1)).flatten()  # Normalize
             np.fill_diagonal(all_channels[:, :, i], normalized_diag)
+    # convert to float32
+    all_channels = all_channels.astype(np.float32)
     return all_channels

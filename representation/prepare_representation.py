@@ -79,7 +79,7 @@ def save_representations_to_h5(data, pdb_code, binding_information, max_length=4
             del f[group_name]  
 
         group = f.create_group(group_name)
-        group.create_dataset("representation", data=data)
+        group.create_dataset("representation", data=data,compression="gzip",compression_opts=9)
         group.attrs["pdb_code"] = pdb_code
         group.attrs["binding_affinity"] = binding_information['binding_affinity']
         group.attrs["binding_unit"] = binding_information['binding_unit']
@@ -158,6 +158,7 @@ def create_representations(data_path, binding_data_path,max_length=400):
 
       # Save the representation to an HDF5 file
       save_representations_to_h5(representation, folder, {
+          'pdb_code': folder, # 'pdb_code' is the key for the protein-ligand pair
           'binding_affinity': binding_affinity,
           'binding_unit': binding_unit,
           'binding_type': binding_type,
