@@ -6,6 +6,7 @@ from mendeleev.fetch import fetch_table
 import logging
 import re
 import h5py
+import argparse
 
 #Initialize logger
 logging.basicConfig(filename='representation_log.log', level=logging.INFO, 
@@ -33,11 +34,20 @@ except:
   logging.info("Used default van der Waals radii")
 
 # read the csv file
-def read_csv_file(file_path):
+def read_csv_file_train(file_path):
   # Define the correct column names
   correct_column_names = ['PDB_code', 'resolution', 'release_year', '-logKd/Ki', 'Kd/Ki', 'separator', 'reference', 'ligand_name']
   try:
     df = pd.read_csv(file_path, delim_whitespace=True, comment='#', skiprows=6, header=None, names=correct_column_names)
+  except Exception as e:
+    logging.error(f"Error reading file: {file_path} - {e}")
+    sys.exit(1)
+  return df
+
+def read_csv_file_test(file_path):
+  correct_column_names = ['PDB_code'  , 'resl' ,    'year'   , 'logKa' ,   'Ka'  ,        'target']
+  try:
+    df = pd.read_csv(file_path, delim_whitespace=True, comment='#', skiprows=1, header=None, names=correct_column_names)
   except Exception as e:
     logging.error(f"Error reading file: {file_path} - {e}")
     sys.exit(1)
@@ -130,9 +140,9 @@ def create_representation(pdb_code, protein_path,ligand_path, max_length=400,out
   return final_matrix
 
 # Now we will write a function that goes over each protein-ligand folder and creates the representation
-def create_representations(data_path, binding_data_path,max_length=400):
+def create_representations(data_path, binding_data_path,max_length=400,outpath="representations.h5"):
   # Read the csv file
-  df = read_csv_file(binding_data_path)
+  df = read_csv_file_train(binding_data_path)
   logging.info("Read the csv file!")
 
   # Get the list of folders in the data path
@@ -165,21 +175,29 @@ def create_representations(data_path, binding_data_path,max_length=400):
           'resolution': resolution,
           'p_binding_affinity': p_binding_affinity,
           'ligand_name': ligand_name
-      })
+      }, max_length, outpath)
       logging.info(f"Representation created for {count}/{len(folders)} - {folder}")
     except Exception as e:
       logging.error(f"Error processing folder {count}/{len(folders)} - {folder} - {e}")
-# Get the data path from the command line
-if len(sys.argv) < 2:
-  logging.error("Please provide the data path")
+
+
+# data_path = sys.argv[1]
+# binding_data_path = sys.argv[2]
+# csafe_path = sys.argv[3]
+# max_length = int(sys.argv[4])
+# Now we will get the data path from the command line using argparse
+parser = argparse.ArgumentParser(description="Create protein-ligand representations")
+parser.add_argument('-m',"--max_length", type=int, default=400,help="Maximum length of the protein sequence")
+parser.add_argument("--data_path", type=str, help="Path to the protein-ligand training data")
+parser.add_argument("--binding_data_path", type=str, help="Path to the binding affinity data")
+parser.add_argument('-o',"--output_file", type=str, default="representations.h5",help="Path to the desired output file")
+args = parser.parse_args()
+
+# Create the representations
+if args.data_path and args.binding_data_path:
+  create_representations(args.data_path, args.binding_data_path, args.max_length, args.output_file)
+else:
+  logging.error("Please provide the data path and binding data path")
   sys.exit(1)
-
-data_path = sys.argv[1]
-binding_data_path = sys.argv[2]
-create_representations(data_path, binding_data_path)
-
-
-
-
 
 
