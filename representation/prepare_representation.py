@@ -7,6 +7,7 @@ import logging
 import re
 import h5py
 import argparse
+from multiprocessing import Pool, cpu_count, Lock, Manager
 
 #Initialize logger
 logging.basicConfig(filename='representation_log.log', level=logging.INFO, 
@@ -98,7 +99,9 @@ def save_representations_to_h5(data, pdb_code, binding_information, max_length=4
         group.attrs["p_binding_affinity"] = binding_information['p_binding_affinity']
         group.attrs["ligand_name"] = binding_information['ligand_name']
 
-def create_representation(pdb_code, protein_path,ligand_path, df,outpath,max_length=400,outlier_threshold=1000):
+def create_representation(args):
+  pdb_code, protein_path, ligand_path, df, outpath, max_length, outlier_threshold ,lock= args
+
   #Read the protein file
   protein_structure = get_protein_structure(protein_path)
   #protein_residues = protein_structure.get_residues()
@@ -140,59 +143,48 @@ def create_representation(pdb_code, protein_path,ligand_path, df,outpath,max_len
   representation=normalize_data(stacked_matrix)
   
   binding_affinity, binding_unit, binding_type, resolution, p_binding_affinity, ligand_name = get_binding_affinity_info(pdb_code, df)
+
+
   # Save the representation to an HDF5 file
-  save_representations_to_h5(representation, pdb_code, {
-      'pdb_code': pdb_code, # 'pdb_code' is the key for the protein-ligand pair
-      'binding_affinity': binding_affinity,
-      'binding_unit': binding_unit,
-      'binding_type': binding_type,
-      'resolution': resolution,
-      'p_binding_affinity': p_binding_affinity,
-      'ligand_name': ligand_name
-  }, max_length, outpath)
+  with lock:
+    save_representations_to_h5(representation, pdb_code, {
+        'pdb_code': pdb_code, # 'pdb_code' is the key for the protein-ligand pair
+        'binding_affinity': binding_affinity,
+        'binding_unit': binding_unit,
+        'binding_type': binding_type,
+        'resolution': resolution,
+        'p_binding_affinity': p_binding_affinity,
+        'ligand_name': ligand_name
+    }, max_length, outpath)
   # return final_matrix
   return 1
 
 # Now we will write a function that goes over each protein-ligand folder and creates the representation
-def create_representations(data_path, binding_data_path,max_length=400,outpath="representations.h5"):
-  # Read the csv file
-  df = read_csv_file_train(binding_data_path)
-  logging.info("Read the csv file!")
+def create_representations(data_path, binding_data_path, max_length=400, outpath="representations.h5"):
+    df = read_csv_file_train(binding_data_path)
+    logging.info("Read the csv file!")
 
-  # Get the list of folders in the data path
-  folders = os.listdir(data_path)
-  logging.info("Got the list of folders!")
-  logging.info(f"Number of folders: {len(folders)}")
+    folders = os.listdir(data_path)
+    logging.info("Got the list of folders!")
+    logging.info(f"Number of folders: {len(folders)}")
 
-  count = 0
-  for folder in folders:
-    count += 1
-    logging.info(f"Processing folder {count}/{len(folders)} - {folder}")
-    
-    try:
-      # Get the protein and ligand file paths
-      protein_path = os.path.join(data_path, folder, f"{folder}_protein.pdb")
-      ligand_path = os.path.join(data_path, folder, f"{folder}_ligand.mol2")
+    args_list = []
+    with Manager() as manager:
+      lock = manager.Lock()
+    #lock = Lock()
+      for folder in folders:
+          protein_path = os.path.join(data_path, folder, f"{folder}_protein.pdb")
+          ligand_path = os.path.join(data_path, folder, f"{folder}_ligand.mol2")
+          args = (folder, protein_path, ligand_path, df, outpath, max_length, 1000, lock)
+          args_list.append(args)
 
-      # Get the binding affinity information
-      # binding_affinity, binding_unit, binding_type, resolution, p_binding_affinity, ligand_name = get_binding_affinity_info(folder, df)
+      num_processes = cpu_count()  # Adjust based on your system's capabilities
 
-      # Create the representation
-      representation = create_representation(folder, protein_path, ligand_path, df=df,outpath=outpath,max_length=max_length)
+      with Pool(num_processes) as pool:
+          for i, result in enumerate(pool.imap_unordered(create_representation, args_list), 1):
+              if result is not None:
+                  logging.info(f"Representation created for folder {i}/{len(folders)}")
 
-      # # Save the representation to an HDF5 file
-      # save_representations_to_h5(representation, folder, {
-      #     'pdb_code': folder, # 'pdb_code' is the key for the protein-ligand pair
-      #     'binding_affinity': binding_affinity,
-      #     'binding_unit': binding_unit,
-      #     'binding_type': binding_type,
-      #     'resolution': resolution,
-      #     'p_binding_affinity': p_binding_affinity,
-      #     'ligand_name': ligand_name
-      # }, max_length, outpath)
-      logging.info(f"Representation created for {count}/{len(folders)} - {folder}")
-    except Exception as e:
-      logging.error(f"Error processing folder {count}/{len(folders)} - {folder} - {e}")
 
 
 # data_path = sys.argv[1]
@@ -200,18 +192,23 @@ def create_representations(data_path, binding_data_path,max_length=400,outpath="
 # csafe_path = sys.argv[3]
 # max_length = int(sys.argv[4])
 # Now we will get the data path from the command line using argparse
-parser = argparse.ArgumentParser(description="Create protein-ligand representations")
-parser.add_argument('-m',"--max_length", type=int, default=400,help="Maximum length of the protein sequence")
-parser.add_argument("--data_path", type=str, help="Path to the protein-ligand training data")
-parser.add_argument("--binding_data_path", type=str, help="Path to the binding affinity data")
-parser.add_argument('-o',"--output_file", type=str, default="representations.h5",help="Path to the desired output file")
-args = parser.parse_args()
+if __name__ == "__main__":
+  parser = argparse.ArgumentParser(description="Create protein-ligand representations")
+  parser.add_argument('-m',"--max_length", type=int, default=400,help="Maximum length of the protein sequence")
+  parser.add_argument("--data_path", type=str, help="Path to the protein-ligand training data")
+  parser.add_argument("--binding_data_path", type=str, help="Path to the binding affinity data")
+  parser.add_argument('-o',"--output_file", type=str, default="representations.h5",help="Path to the desired output file")
+  args = parser.parse_args()
 
-# Create the representations
-if args.data_path and args.binding_data_path:
-  create_representations(args.data_path, args.binding_data_path, args.max_length, args.output_file)
-else:
-  logging.error("Please provide the data path and binding data path")
-  sys.exit(1)
+  # Create the representations
+  if args.data_path and args.binding_data_path:
+    try:
+      create_representations(args.data_path, args.binding_data_path, args.max_length, args.output_file)
+    except Exception as e:
+      logging.error(f"Error creating representations: {e}")
+      sys.exit(1)
+  else:
+    logging.error("Please provide the data path and binding data path")
+    sys.exit(1)
 
 
