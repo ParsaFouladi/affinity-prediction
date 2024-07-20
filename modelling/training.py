@@ -27,6 +27,11 @@ def calculate_metrics(y_true, y_pred):
     Returns:
         dict: A dictionary containing the calculated metrics.
     """
+
+    # convert to numpy arrays as float32
+    y_true = np.array(y_true, dtype=np.float32)
+    y_pred = np.array(y_pred, dtype=np.float32)
+
     
     mse = mean_squared_error(y_true, y_pred)
     rmse = np.sqrt(mse)
@@ -101,7 +106,10 @@ def main(args):
                 outputs = model(representations)
                 loss = criterion(outputs, binding_affinities)
                 val_loss += loss.item()
-                all_preds.extend(outputs.cpu().numpy())
+                
+                for out in outputs.cpu().numpy():
+                    all_preds.append(out[0])
+                #all_preds.extend(outputs.cpu().numpy())
                 all_targets.extend(binding_affinities.cpu().numpy())
 
         val_loss /= len(val_loader)
@@ -110,6 +118,7 @@ def main(args):
         val_metrics = calculate_metrics(np.array(all_targets), np.array(all_preds))
         # Log validation metrics to TensorBoard
         for metric_name, metric_value in val_metrics.items():
+            logging.info(f"Validation {metric_name}: {metric_value}")
             writer.add_scalar(f"Metrics/{metric_name}", metric_value, epoch)
 
         print(f"Epoch {epoch + 1}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
