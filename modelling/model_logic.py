@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class CNNModel(nn.Module):
+class CNNModelBasic(nn.Module):
     def __init__(self, input_shape):
-        super(CNNModel, self).__init__()
+        super(CNNModelBasic, self).__init__()
         
         # First Convolutional Block
         self.conv1 = nn.Sequential(
@@ -65,12 +65,12 @@ class CNNModel(nn.Module):
         
         return x
 
-# Example usage
-input_shape = (3, 400, 400)  # Change this shape as needed
-model = CNNModel(input_shape)
+# # Example usage
+# input_shape = (3, 400, 400)  # Change this shape as needed
+# model = CNNModelBasic(input_shape)
 
-criterion = nn.BCEWithLogitsLoss()  # Use nn.CrossEntropyLoss() for multi-class classification
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+# criterion = nn.BCEWithLogitsLoss()  # Use nn.CrossEntropyLoss() for multi-class classification
+# optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-# Print the model architecture
-print(model)
+# # Print the model architecture
+# print(model)

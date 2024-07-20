@@ -22,6 +22,10 @@ class ProteinLigandDataset(Dataset):
 
         if self.transform:
             representation = self.transform(representation)
+        else:
+            # Ensure the representation is in the format (channels, height, width)
+            if representation.shape[-1] == 3:
+                representation = np.transpose(representation, (2, 0, 1))
 
         # Convert to PyTorch tensors and return as float 32
 
