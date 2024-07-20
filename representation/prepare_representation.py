@@ -98,7 +98,7 @@ def save_representations_to_h5(data, pdb_code, binding_information, max_length=4
         group.attrs["p_binding_affinity"] = binding_information['p_binding_affinity']
         group.attrs["ligand_name"] = binding_information['ligand_name']
 
-def create_representation(pdb_code, protein_path,ligand_path, max_length=400,outlier_threshold=1000):
+def create_representation(pdb_code, protein_path,ligand_path, df,outpath,max_length=400,outlier_threshold=1000):
   #Read the protein file
   protein_structure = get_protein_structure(protein_path)
   #protein_residues = protein_structure.get_residues()
@@ -136,8 +136,22 @@ def create_representation(pdb_code, protein_path,ligand_path, max_length=400,out
   
   stacked_matrix=np.stack((d_matrix,w_matrix,v_matrix),axis=-1)
 
-  final_matrix=normalize_data(stacked_matrix)
-  return final_matrix
+  # final_matrix=normalize_data(stacked_matrix)
+  representation=normalize_data(stacked_matrix)
+  
+  binding_affinity, binding_unit, binding_type, resolution, p_binding_affinity, ligand_name = get_binding_affinity_info(pdb_code, df)
+  # Save the representation to an HDF5 file
+  save_representations_to_h5(representation, pdb_code, {
+      'pdb_code': pdb_code, # 'pdb_code' is the key for the protein-ligand pair
+      'binding_affinity': binding_affinity,
+      'binding_unit': binding_unit,
+      'binding_type': binding_type,
+      'resolution': resolution,
+      'p_binding_affinity': p_binding_affinity,
+      'ligand_name': ligand_name
+  }, max_length, outpath)
+  # return final_matrix
+  return 1
 
 # Now we will write a function that goes over each protein-ligand folder and creates the representation
 def create_representations(data_path, binding_data_path,max_length=400,outpath="representations.h5"):
@@ -161,21 +175,21 @@ def create_representations(data_path, binding_data_path,max_length=400,outpath="
       ligand_path = os.path.join(data_path, folder, f"{folder}_ligand.mol2")
 
       # Get the binding affinity information
-      binding_affinity, binding_unit, binding_type, resolution, p_binding_affinity, ligand_name = get_binding_affinity_info(folder, df)
+      # binding_affinity, binding_unit, binding_type, resolution, p_binding_affinity, ligand_name = get_binding_affinity_info(folder, df)
 
       # Create the representation
-      representation = create_representation(folder, protein_path, ligand_path, max_length)
+      representation = create_representation(folder, protein_path, ligand_path, df=df,outpath=outpath,max_length=max_length)
 
-      # Save the representation to an HDF5 file
-      save_representations_to_h5(representation, folder, {
-          'pdb_code': folder, # 'pdb_code' is the key for the protein-ligand pair
-          'binding_affinity': binding_affinity,
-          'binding_unit': binding_unit,
-          'binding_type': binding_type,
-          'resolution': resolution,
-          'p_binding_affinity': p_binding_affinity,
-          'ligand_name': ligand_name
-      }, max_length, outpath)
+      # # Save the representation to an HDF5 file
+      # save_representations_to_h5(representation, folder, {
+      #     'pdb_code': folder, # 'pdb_code' is the key for the protein-ligand pair
+      #     'binding_affinity': binding_affinity,
+      #     'binding_unit': binding_unit,
+      #     'binding_type': binding_type,
+      #     'resolution': resolution,
+      #     'p_binding_affinity': p_binding_affinity,
+      #     'ligand_name': ligand_name
+      # }, max_length, outpath)
       logging.info(f"Representation created for {count}/{len(folders)} - {folder}")
     except Exception as e:
       logging.error(f"Error processing folder {count}/{len(folders)} - {folder} - {e}")
