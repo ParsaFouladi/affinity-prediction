@@ -67,6 +67,10 @@ def read_csv_file_test(file_path):
     sys.exit(1)
   return df
 
+def common_pdbs(df1,df2):
+    common_pdbs=set(df1['PDB_code']).intersection(set(df2['PDB_code']))
+    return common_pdbs
+
 # Get the desired PDB code binding affinity
 def get_binding_affinity_info(pdb_code, df):
   try:
@@ -181,7 +185,8 @@ def create_representations(data_path, binding_data_path, binding_data_test,max_l
     logging.info("Got the list of folders!")
     logging.info(f"Number of folders: {len(folders)}")
     if binding_data_test:
-       common_folders=find_common_folders(binding_data_path,binding_data_test)
+       df_test=read_csv_file_test(binding_data_test)
+       common_folders=common_pdbs(df,df_test)
        logging.info(f"Number of common folders: {len(common_folders)}")
     else:
        common_folders=[]
@@ -193,6 +198,7 @@ def create_representations(data_path, binding_data_path, binding_data_test,max_l
     #lock = Lock()
       for folder in folders:
           if folder in common_folders:
+             logging.info(f"{folder} was found in the test set. Skipping...")
              continue
           protein_path = os.path.join(data_path, folder, f"{folder}_protein.pdb")
           ligand_path = os.path.join(data_path, folder, f"{folder}_ligand.mol2")
@@ -225,7 +231,7 @@ if __name__ == "__main__":
   # Create the representations
   if args.data_path and args.binding_data_path:
     try:
-      create_representations(args.data_path, args.binding_data_path, args.binding_data_path,args.max_length, args.output_file)
+      create_representations(args.data_path, args.binding_data_path, args.binding_data_test,args.max_length, args.output_file)
     except Exception as e:
       logging.error(f"Error creating representations: {e}")
       sys.exit(1)
