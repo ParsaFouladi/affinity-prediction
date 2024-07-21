@@ -230,11 +230,7 @@ if __name__ == "__main__":
 
   # Create the representations
   if args.data_path and args.binding_data_path:
-    try:
-      create_representations(args.data_path, args.binding_data_path, args.binding_data_test,args.max_length, args.output_file)
-    except Exception as e:
-      logging.error(f"Error creating representations: {e}")
-      sys.exit(1)
+    create_representations(args.data_path, args.binding_data_path, args.binding_data_test,args.max_length, args.output_file)
   else:
     logging.error("Please provide the data path and binding data path")
     sys.exit(1)
