@@ -9,6 +9,7 @@ import h5py
 import argparse
 from multiprocessing import Pool, cpu_count, Lock, Manager
 
+
 #Initialize logger
 logging.basicConfig(filename='representation_log.log', level=logging.INFO, 
                     format='%(asctime)s %(levelname)s:%(message)s')
@@ -33,6 +34,18 @@ except:
  'Pu': 243.00000000000003,'Am': 244.0,'Cm': 245.00000000000003,'Bk': 244.0,'Cf': 245.00000000000003,'Es': 245.00000000000003,'Fm': 245.00000000000003,'Md': 246.0,'No': 246.0,'Lr': 246.0}
 
   logging.info("Used default van der Waals radii")
+
+def find_common_folders(dir1, dir2):
+    # Get a list of all folders in the first directory
+    folders1 = [name for name in os.listdir(dir1) if os.path.isdir(os.path.join(dir1, name))]
+    
+    # Get a list of all folders in the second directory
+    folders2 = [name for name in os.listdir(dir2) if os.path.isdir(os.path.join(dir2, name))]
+    
+    # Find the common folders between the two directories
+    common_folders = set(folders1).intersection(folders2)
+    
+    return common_folders
 
 # read the csv file
 def read_csv_file_train(file_path):
@@ -160,19 +173,27 @@ def create_representation(args):
   return 1
 
 # Now we will write a function that goes over each protein-ligand folder and creates the representation
-def create_representations(data_path, binding_data_path, max_length=400, outpath="representations.h5"):
+def create_representations(data_path, binding_data_path, binding_data_test,max_length=400, outpath="representations.h5"):
     df = read_csv_file_train(binding_data_path)
     logging.info("Read the csv file!")
 
     folders = os.listdir(data_path)
     logging.info("Got the list of folders!")
     logging.info(f"Number of folders: {len(folders)}")
+    if binding_data_test:
+       common_folders=find_common_folders(binding_data_path,binding_data_test)
+       logging.info(f"Number of common folders: {len(common_folders)}")
+    else:
+       common_folders=[]
+       
 
     args_list = []
     with Manager() as manager:
       lock = manager.Lock()
     #lock = Lock()
       for folder in folders:
+          if folder in common_folders:
+             continue
           protein_path = os.path.join(data_path, folder, f"{folder}_protein.pdb")
           ligand_path = os.path.join(data_path, folder, f"{folder}_ligand.mol2")
           args = (folder, protein_path, ligand_path, df, outpath, max_length, 1000, lock)
@@ -197,13 +218,14 @@ if __name__ == "__main__":
   parser.add_argument('-m',"--max_length", type=int, default=400,help="Maximum length of the protein sequence")
   parser.add_argument("--data_path", type=str, help="Path to the protein-ligand training data")
   parser.add_argument("--binding_data_path", type=str, help="Path to the binding affinity data")
+  parser.add_argument("--binding_data_test", type=str, default=None,help="Path to the binding affinity data")
   parser.add_argument('-o',"--output_file", type=str, default="representations.h5",help="Path to the desired output file")
   args = parser.parse_args()
 
   # Create the representations
   if args.data_path and args.binding_data_path:
     try:
-      create_representations(args.data_path, args.binding_data_path, args.max_length, args.output_file)
+      create_representations(args.data_path, args.binding_data_path, args.binding_data_path,args.max_length, args.output_file)
     except Exception as e:
       logging.error(f"Error creating representations: {e}")
       sys.exit(1)
