@@ -201,7 +201,7 @@ def create_representations(data_path, binding_data_path, binding_data_test,max_l
              logging.info(f"{folder} was found in the test set. Skipping...")
              continue
           protein_path = os.path.join(data_path, folder, f"{folder}_protein.pdb")
-          ligand_path = os.path.join(data_path, folder, f"{folder}_ligand.mol2")
+          ligand_path = os.path.join(data_path, folder, f"{folder}_ligand.sdf")
           args = (folder, protein_path, ligand_path, df, outpath, max_length, 1000, lock)
           args_list.append(args)
 
