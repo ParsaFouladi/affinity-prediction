@@ -138,12 +138,12 @@ def create_representation(args):
     logging.info(f"Protein {pdb_code} has more than 1000 amino acids. Skipping...")
     return None
 
-  if number_of_aa>400:
+  if number_of_aa>max_length:
     residues_to_keep=truncation(protein_coords,lignad_coords,max_length=max_length)
     d_matrix=distance_matrix(protein_coords,lignad_coords,protein_size=max_length,residues_to_keep=residues_to_keep)
     w_matrix=molecular_weight(protein_structure,ligand_mol,protein_size=max_length,residues_to_keep=residues_to_keep)
     v_matrix=vdw_radius_mol(protein_structure,ligand_mol,van_dict,protein_size=max_length,residues_to_keep=residues_to_keep)
-  elif number_of_aa<400:
+  elif number_of_aa<max_length:
     residues_to_keep='all'
     d_matrix=padding(distance_matrix(protein_coords,lignad_coords,protein_size=number_of_aa,residues_to_keep=residues_to_keep),max_length+1)
     w_matrix=padding(molecular_weight(protein_structure,ligand_mol,protein_size=number_of_aa,residues_to_keep=residues_to_keep),max_length+1)
