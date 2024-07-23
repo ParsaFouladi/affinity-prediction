@@ -41,6 +41,7 @@ def get_ligand_structure(ligand_path):
         ligand_mol: Parsed ligand molecule.
     """
     ligand_mol = Chem.MolFromMol2File(ligand_path)
+    #ligand_mol=Chem.SDMolSupplier(ligand_path)
     return ligand_mol
 
 def get_amino_acid_cordinates(structure_residues):
@@ -67,7 +68,14 @@ def get_ligand_cordinates(ligand_mol):
     Returns:
         np.ndarray: Numpy array of geometric center coordinates of the ligand.
     """
+    # # Iterate over the molecules in the SDF file
+    # for mol in ligand_mol:
+    #   if mol is None:
+    #     continue  # Skip any molecules that couldn't be parsed
+    
+    # Get the conformer of the molecule
     conf = ligand_mol.GetConformer()
+    #conf = ligand_mol.GetConformer()
     ligand_coords = conf.GetPositions()
     ligand_coord = ligand_coords.mean(axis=0)
     return ligand_coord
