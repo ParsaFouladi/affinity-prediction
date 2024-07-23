@@ -66,6 +66,8 @@ def main(args):
     criterion = nn.MSELoss()  
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True)
+
     # TensorBoard for Logging
     writer = SummaryWriter(log_dir=args.log_dir)
 
@@ -123,6 +125,13 @@ def main(args):
 
         print(f"Epoch {epoch + 1}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
         logging.info(f"Epoch {epoch + 1}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
+
+        # Step the scheduler
+        scheduler.step(val_loss)
+
+        for param_group in optimizer.param_groups:
+            logging.info(f"Learning rate at epoch {epoch+1} is: {param_group['lr']}")
+            writer.add_scalar('Learning Rate', param_group['lr'], epoch+1)
 
     writer.close()
 
