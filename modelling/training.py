@@ -12,9 +12,7 @@ from sklearn.metrics import mean_squared_error
 import os
 import logging
 
-#Initialize logger
-logging.basicConfig(filename='modelling_log.log', level=logging.INFO, 
-                    format='%(asctime)s %(levelname)s:%(message)s')
+
 
 
 def calculate_metrics(y_true, y_pred):
@@ -44,6 +42,9 @@ def calculate_metrics(y_true, y_pred):
         "Spearman Correlation": spearman_corr
     }
 def main(args):
+    #Initialize logger
+    logging.basicConfig(filename=f'{args.log_file}', level=logging.INFO, 
+                    format='%(asctime)s %(levelname)s:%(message)s')
     # Data Loading
     dataset = ProteinLigandTrain(args.data_path)
     train_sampler, val_sampler = dataset.get_train_val_split(args.val_split, args.seed)
@@ -149,6 +150,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_workers', type=int, default=4, help='Number of workers for data loading')
     parser.add_argument('--log_dir', type=str, default='./logs', help='Directory for saving TensorBoard logs')
     parser.add_argument('--save_dir', type=str, default='./models', help='Directory for saving the model')
+    parser.add_argument('--log_file', type=str, default='modelling_log.log', help='Log file name')
 
     args = parser.parse_args()
     main(args)
