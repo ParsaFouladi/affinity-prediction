@@ -1,4 +1,4 @@
-from data_loader import ProteinLigandDataset
+from data_loader import ProteinLigandTrain, ProteinLigandTest
 from model_logic import CNNModelBasic
 import torch
 import torch.nn as nn
@@ -45,7 +45,7 @@ def calculate_metrics(y_true, y_pred):
     }
 def main(args):
     # Data Loading
-    dataset = ProteinLigandDataset(args.data_path)
+    dataset = ProteinLigandTrain(args.data_path)
     train_sampler, val_sampler = dataset.get_train_val_split(args.val_split, args.seed)
     logging.info(f"Training samples: {len(train_sampler)}")
 
