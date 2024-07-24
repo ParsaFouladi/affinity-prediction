@@ -187,3 +187,5 @@ modelling/gpu_test.py
 
 *.hdf
 logs/
+
+*.pt
