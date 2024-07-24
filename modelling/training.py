@@ -11,6 +11,7 @@ from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import mean_squared_error
 import os
 import logging
+import datetime
 
 
 
@@ -43,7 +44,11 @@ def calculate_metrics(y_true, y_pred):
     }
 def main(args):
     #Initialize logger
-    logging.basicConfig(filename=f'{args.log_file}', level=logging.INFO, 
+    # put the time in the log file name to avoid overwriting in DDMMYYYY format
+    # Get current date in DDMMYYYY format
+    current_date = datetime.datetime.now().strftime("%d%m%Y")
+
+    logging.basicConfig(filename=f'{args.log_file}_{current_date}', level=logging.INFO, 
                     format='%(asctime)s %(levelname)s:%(message)s')
     # Data Loading
     dataset = ProteinLigandTrain(args.data_path)
