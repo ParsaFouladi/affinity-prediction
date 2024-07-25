@@ -106,10 +106,10 @@ def main(args):
             loss.backward()
             optimizer.step()
 
-            for out in outputs.cpu().numpy():
+            for out in outputs.cpu().detach().numpy():
                 train_preds.append(out[0])
                 #all_preds.extend(outputs.cpu().numpy())
-            train_targets.extend(binding_affinities.cpu().numpy())
+            train_targets.extend(binding_affinities.cpu().detach().numpy())
 
             logging.info(f"Batch {batch_idx + 1}/{len(train_loader)} of size {args.batch_size} of epoch {epoch + 1}/{args.epochs} Finished" + " Loss: " + str(loss.item()))
             
