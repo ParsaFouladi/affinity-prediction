@@ -8,7 +8,7 @@ import argparse
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 from scipy.stats import pearsonr, spearmanr
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error,mean_absolute_error
 import os
 import logging
 import datetime
@@ -33,14 +33,21 @@ def calculate_metrics(y_true, y_pred):
 
     
     mse = mean_squared_error(y_true, y_pred)
+    mae=mean_absolute_error(y_true, y_pred)
     rmse = np.sqrt(mse)
     pearson_corr, _ = pearsonr(y_true, y_pred)
     spearman_corr, _ = spearmanr(y_true, y_pred)
+    
+    residuals = y_true - y_pred
+    sd_residuals = np.std(residuals)
 
     return {
         "RMSE": rmse,
         "Pearson Correlation": pearson_corr,
-        "Spearman Correlation": spearman_corr
+        "Spearman Correlation": spearman_corr,
+        "Mean Squared Error": mse,
+        "Mean Absolute Error":mae,
+        "Standard Deviation of Residuals": sd_residuals
     }
 def main(args):
     #Initialize logger
@@ -82,6 +89,8 @@ def main(args):
         logging.info(f"Epoch {epoch + 1}/{args.epochs} Started")
         model.train()
         train_loss = 0.0
+        train_preds = []
+        train_targets = []
 
         for batch_idx, (representations, binding_affinities) in enumerate(train_loader):
             logging.info(f"Batch {batch_idx + 1}/{len(train_loader)} of size {args.batch_size} of epoch {epoch + 1}/{args.epochs}")
@@ -97,10 +106,22 @@ def main(args):
             loss.backward()
             optimizer.step()
 
+            for out in outputs.cpu().numpy():
+                train_preds.append(out[0])
+                #all_preds.extend(outputs.cpu().numpy())
+            train_targets.extend(binding_affinities.cpu().numpy())
+
             logging.info(f"Batch {batch_idx + 1}/{len(train_loader)} of size {args.batch_size} of epoch {epoch + 1}/{args.epochs} Finished" + " Loss: " + str(loss.item()))
             
         train_loss /= len(train_loader)
         writer.add_scalar("Loss/train", train_loss, epoch)
+        logging.info(f"Epoch {epoch + 1} training loss: {train_loss}")
+
+        train_metrics = calculate_metrics(np.array(train_targets), np.array(train_preds))
+        # Log training metrics to TensorBoard
+        for metric_name, metric_value in train_metrics.items():
+            logging.info(f"Training {metric_name}: {metric_value}")
+            writer.add_scalar(f"Metrics/Training/{metric_name}", metric_value, epoch)
             
         # Validation
         model.eval()
@@ -122,12 +143,13 @@ def main(args):
 
         val_loss /= len(val_loader)
         writer.add_scalar("Loss/val", val_loss, epoch)
+        logging.info(f"Epoch {epoch + 1} validation loss: {val_loss}")
 
         val_metrics = calculate_metrics(np.array(all_targets), np.array(all_preds))
         # Log validation metrics to TensorBoard
         for metric_name, metric_value in val_metrics.items():
             logging.info(f"Validation {metric_name}: {metric_value}")
-            writer.add_scalar(f"Metrics/{metric_name}", metric_value, epoch)
+            writer.add_scalar(f"Metrics/Validation/{metric_name}", metric_value, epoch)
 
         print(f"Epoch {epoch + 1}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
         logging.info(f"Epoch {epoch + 1}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
@@ -142,7 +164,7 @@ def main(args):
     writer.close()
 
     # Saving the model
-    torch.save(model.state_dict(), os.path.join(args.save_dir, 'model.pt'))
+    torch.save(model.state_dict(), os.path.join(args.save_dir, f'model_{current_date}.pt'))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Protein-Ligand Binding Affinity Prediction')
