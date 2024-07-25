@@ -48,7 +48,7 @@ def main(args):
     # Get current date in DDMMYYYY format
     current_date = datetime.datetime.now().strftime("%d%m%Y")
 
-    logging.basicConfig(filename=f'{args.log_file}_{current_date}', level=logging.INFO, 
+    logging.basicConfig(filename=f'{args.log_file}_{current_date}.log', level=logging.INFO, 
                     format='%(asctime)s %(levelname)s:%(message)s')
     # Data Loading
     dataset = ProteinLigandTrain(args.data_path)
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_workers', type=int, default=4, help='Number of workers for data loading')
     parser.add_argument('--log_dir', type=str, default='./logs', help='Directory for saving TensorBoard logs')
     parser.add_argument('--save_dir', type=str, default='./models', help='Directory for saving the model')
-    parser.add_argument('--log_file', type=str, default='modelling_log.log', help='Log file name')
+    parser.add_argument('--log_file', type=str, default='modelling_log', help='Log file name')
 
     args = parser.parse_args()
     main(args)
