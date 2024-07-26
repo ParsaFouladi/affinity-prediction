@@ -21,7 +21,14 @@ def main(args):
     # Load the model
     input_shape = (3, 401, 401)
     model = CNNModelBasic(input_shape)  # Instantiate the model first
-    model.load_state_dict(torch.load(args.model_path),strict=False)  # Load model state dictionary
+    state_dict = torch.load(args.model_path)
+    new_state_dict = {}
+    for k, v in state_dict.items():
+        if k.startswith('module.'):
+            new_state_dict[k[7:]] = v  # Remove the 'module.' prefix
+        else:
+            new_state_dict[k] = v
+    model.load_state_dict(state_dict=new_state_dict)  # Load model state dictionary
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device) 
     model.eval() 
