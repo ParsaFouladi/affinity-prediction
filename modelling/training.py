@@ -70,7 +70,8 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logging.info(f"Using {device} for training")
 
-    input_shape = (3, 401, 401)
+    #input_shape = (3, 401, 401)
+    input_shape = (args.input_channels, args.height, args.width)
     model = CNNModelBasic(input_shape).to(device)
     if torch.cuda.device_count() > 1:
         print(f"Using {torch.cuda.device_count()} GPUs!")
@@ -178,6 +179,12 @@ if __name__ == "__main__":
     parser.add_argument('--log_dir', type=str, default='./logs', help='Directory for saving TensorBoard logs')
     parser.add_argument('--save_dir', type=str, default='./models', help='Directory for saving the model')
     parser.add_argument('--log_file', type=str, default='modelling_log', help='Log file name')
+    # get the number of input channels
+    parser.add_argument('--input_channels', type=int, default=3, help='Number of input channels')
+    # get the hight
+    parser.add_argument('--height', type=int, default=401, help='Height of the input image')
+    # get the width
+    parser.add_argument('--width', type=int, default=401, help='Width of the input image')
 
     args = parser.parse_args()
     main(args)
