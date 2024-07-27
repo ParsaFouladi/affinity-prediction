@@ -164,8 +164,9 @@ def main(args):
 
     writer.close()
 
+    model_name = args.output_name
     # Saving the model
-    torch.save(model.state_dict(), os.path.join(args.save_dir, f'model_{current_date}.pt'))
+    torch.save(model.state_dict(), os.path.join(args.save_dir, f'{model_name}_{current_date}.pt'))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Protein-Ligand Binding Affinity Prediction')
@@ -185,6 +186,8 @@ if __name__ == "__main__":
     parser.add_argument('--height', type=int, default=401, help='Height of the input image')
     # get the width
     parser.add_argument('--width', type=int, default=401, help='Width of the input image')
+    #output name
+    parser.add_argument('-o','--output_name', type=str, default='model', help='Name of the output model')
 
     args = parser.parse_args()
     main(args)
