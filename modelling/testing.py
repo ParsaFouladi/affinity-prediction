@@ -19,7 +19,8 @@ def main(args):
                         format='%(asctime)s %(levelname)s:%(message)s')
 
     # Load the model
-    input_shape = (3, 401, 401)
+    #input_shape = (3, 401, 401)
+    input_shape = (args.input_channels, args.height, args.width)
     model = CNNModelBasic(input_shape)  # Instantiate the model first
     state_dict = torch.load(args.model_path)
     new_state_dict = {}
@@ -61,6 +62,12 @@ if __name__=="__main__":
     parser.add_argument('--model_path', type=str, default='model.pt', help='Path to the trained model file')
     parser.add_argument('--num_workers', type=int, default=4, help='Number of workers for data loading')
     parser.add_argument('--log_file', type=str, default='test', help='File to save the test logs')
+    # get the number of input channels
+    parser.add_argument('--input_channels', type=int, default=3, help='Number of input channels')
+    # get the hight
+    parser.add_argument('--height', type=int, default=401, help='Height of the input image')
+    # get the width
+    parser.add_argument('--width', type=int, default=401, help='Width of the input image')
 
     args=parser.parse_args()
     main(args)
