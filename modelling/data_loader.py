@@ -103,7 +103,7 @@ class ProteinLigandTest(Dataset):
 
         # Convert to PyTorch tensors and return as float 32
 
-        return torch.from_numpy(representation).float(), torch.tensor(p_binding_affinity).float()
+        return torch.from_numpy(representation).float(), torch.tensor(p_binding_affinity).float(), group_name
     
     def head(self):
         return self.group_names[:5]

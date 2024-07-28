@@ -7,6 +7,7 @@ from training import calculate_metrics
 import logging
 import argparse
 import datetime
+import pandas as pd
 
 # Load Trained Model
 ##model_path = "model.pt"  # Replace with your actual model path
@@ -36,22 +37,29 @@ def main(args):
 
     # Load Test Dataset (replace with your actual path to the test HDF5 file)
     test_dataset = ProteinLigandTest(args.test_data_path)
-    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=0)  # No shuffling during testing
+    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False, num_workers=0)  # No shuffling during testing
 
     # Make Predictions and Calculate Metrics
     all_preds = []
     all_targets = []
+    results_dict = {}
     with torch.no_grad():
-        for batch_id,(representations, binding_affinities) in enumerate(test_loader):
+        for batch_id,(representations, binding_affinities,group_names) in enumerate(test_loader):
             logging.info(f"Batch {batch_id} Started")
-            representations, binding_affinities = representations.to(device), binding_affinities.to(device)
+            representations, binding_affinities= representations.to(device), binding_affinities.to(device)
             outputs = model(representations)
             all_preds.extend(outputs.cpu().numpy().flatten())  # Flatten in case of batches
             all_targets.extend(binding_affinities.cpu().numpy())
+            results_dict.update({group_name: (output.cpu().numpy().flatten(), binding_affinity.cpu().numpy()) for group_name, output, binding_affinity in zip(group_names, outputs, binding_affinities)})
             logging.info(f"Batch {batch_id} Completed")
 
     test_metrics = calculate_metrics(np.array(all_targets), np.array(all_preds))
     logging.info(f"Test Metrics: {test_metrics}")
+    # Save Predictions and Metrics
+    results_df = pd.DataFrame(results_dict).T
+    results_df.columns = ['Predicted', 'Actual']
+    results_name=args.result_name
+    results_df.to_csv(f"results/{results_name}_{current_date}.csv")
     
     
 
@@ -68,6 +76,8 @@ if __name__=="__main__":
     parser.add_argument('--height', type=int, default=401, help='Height of the input image')
     # get the width
     parser.add_argument('--width', type=int, default=401, help='Width of the input image')
+    #output file of the results
+    parser.add_argument('--result_name', type=str, default='results', help='Output file name')
 
     args=parser.parse_args()
     main(args)
