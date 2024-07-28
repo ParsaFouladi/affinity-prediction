@@ -189,3 +189,5 @@ modelling/gpu_test.py
 logs/
 
 *.pt
+
+results/
