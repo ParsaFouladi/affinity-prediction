@@ -282,3 +282,69 @@ def normalize_data(stacked_array):
     # convert to float32
     all_channels = all_channels.astype(np.float32)
     return all_channels
+
+def rg_mol(structure, ligand_mol, protein_size, residues_to_keep='all'):
+    """
+    Compute the radius of gyration matrix including both protein residues and the ligand and save the mean.
+
+    Args:
+        structure: Protein structure (Bio.PDB.Structure).
+        ligand_mol: Ligand molecule (RDKit Mol object).
+        protein_size (int): Size of the protein (number of residues).
+        residues_to_keep (str or list): List of residue indices to keep or 'all' to keep all.
+
+    Returns:
+        np.ndarray: Radius of gyration matrix.
+    """
+    def calculate_rg(coords):
+        """
+        Calculate the radius of gyration for a set of coordinates.
+        """
+        center_of_mass = np.mean(coords, axis=0)
+        rg = np.sqrt(np.mean(np.sum((coords - center_of_mass)**2, axis=1)))
+        return rg
+
+    structure_residues = structure.get_residues()
+    matrix_length = protein_size + 1  # Protein residues + 1 for ligand
+    aa_rgs = []
+
+    # Determine which residues to keep
+    if isinstance(residues_to_keep, str) and residues_to_keep == 'all':
+        residues_to_keep = range(protein_size)
+    
+    # Process each residue in the structure
+    residue_number = 0
+    for residue in structure_residues:
+        if residue.id[0] in [" ", "H"] and residue_number in residues_to_keep:
+            coords = np.array([atom.coord for atom in residue.get_atoms()])
+            if coords.size > 0:  # Ensure there are coordinates to process
+                rg = calculate_rg(coords)
+                aa_rgs.append(rg)
+        residue_number += 1
+    # Get the conformer of the molecule
+    conf = ligand_mol.GetConformer()
+    #conf = ligand_mol.GetConformer()
+    ligand_coords = conf.GetPositions()
+    # # Process ligand atoms
+    # ligand_coords = []
+    # for atom in ligand_mol.GetAtoms():
+    #     pos = atom.GetConformer().GetAtomPosition(atom.GetIdx())
+    #     ligand_coords.append([pos.x, pos.y, pos.z])
+    
+    ligand_coords = np.array(ligand_coords)
+    if ligand_coords.size > 0:  # Ensure there are coordinates to process
+        ligand_rg = calculate_rg(ligand_coords)
+        #print(ligand_rg)
+    else:
+        ligand_rg = 0.0
+    
+    # Combine protein and ligand radii of gyration
+    final_lst = aa_rgs + [ligand_rg]
+    
+    # Initialize radius of gyration matrix
+    rg_channel = np.zeros((matrix_length, matrix_length))
+    #print(final_lst)
+    # Fill diagonal with radii of gyration
+    np.fill_diagonal(rg_channel, final_lst)
+    
+    return rg_channel
