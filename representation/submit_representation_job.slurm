@@ -17,4 +17,4 @@ source activate bio
 
 
 # Run the Python script
-python3 prepare_representation.py --data_path /mainfs/scratch/mk6n23/parsa_data/pdbbind_train/refined-set/ --binding_data_path /mainfs/scratch/mk6n23/parsa_data/pdbbind_train/refined_data.2020 --binding_data_test /mainfs/scratch/mk6n23/parsa_data/pdbbind_train/CoreSet.dat -o /mainfs/scratch/mk6n23/parsa_data/representations/representation_train_300_van.h5 -m 300
+python3 prepare_representation.py --data_path /mainfs/scratch/mk6n23/parsa_data/pdbbind_train/refined-set/ --binding_data_path /mainfs/scratch/mk6n23/parsa_data/pdbbind_train/refined_data.2020 -o /mainfs/scratch/mk6n23/parsa_data/representations/representation_train_300_van_try.h5 -m 300
