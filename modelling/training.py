@@ -12,6 +12,8 @@ from sklearn.metrics import mean_squared_error,mean_absolute_error
 import os
 import logging
 import datetime
+from collections import Counter
+
 
 
 
@@ -102,7 +104,11 @@ def main(args):
 
             optimizer.zero_grad()
             outputs = model(representations)
+            # logging.info(f"Outputs: {outputs}")
+            # logging.info(f"Targets: {binding_affinities}")
             loss = criterion(outputs, binding_affinities)
+            # Weighted MSE Loss
+            
             train_loss += loss.item()  # Summing up training loss for the epoch
             loss.backward()
             optimizer.step()
@@ -135,12 +141,22 @@ def main(args):
                 representations, binding_affinities = representations.to(device), binding_affinities.to(device)
                 outputs = model(representations)
                 loss = criterion(outputs, binding_affinities)
+                
+
                 val_loss += loss.item()
                 
                 for out in outputs.cpu().numpy():
                     all_preds.append(out[0])
+                
+                #     logging.info(f"Predictions: {out[0]}")
+                # logging.info(f"Targets: {binding_affinities.cpu().numpy()}")
+
                 #all_preds.extend(outputs.cpu().numpy())
                 all_targets.extend(binding_affinities.cpu().numpy())
+        
+        # print all the predictions and targets
+        logging.info(f"Predictions: {all_preds}")
+        logging.info(f"Targets: {all_targets}")
 
         val_loss /= len(val_loader)
         writer.add_scalar("Loss/val", val_loss, epoch)
@@ -181,11 +197,11 @@ if __name__ == "__main__":
     parser.add_argument('--save_dir', type=str, default='./models', help='Directory for saving the model')
     parser.add_argument('--log_file', type=str, default='modelling_log', help='Log file name')
     # get the number of input channels
-    parser.add_argument('--input_channels', type=int, default=3, help='Number of input channels')
+    parser.add_argument('-c','--input_channels', type=int, default=3, help='Number of input channels')
     # get the hight
     parser.add_argument('--height', type=int, default=401, help='Height of the input image')
     # get the width
-    parser.add_argument('--width', type=int, default=401, help='Width of the input image')
+    parser.add_argument('-w','--width', type=int, default=401, help='Width of the input image')
     #output name
     parser.add_argument('-o','--output_name', type=str, default='model', help='Name of the output model')
 

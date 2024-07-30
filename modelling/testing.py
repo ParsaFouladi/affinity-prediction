@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from data_loader import ProteinLigandTest  
-from model_logic import CNNModelBasic          
+from model_logic import CNNModelBasic,DeeperCNNModel     
 from training import calculate_metrics
 import logging
 import argparse
@@ -22,7 +22,7 @@ def main(args):
     # Load the model
     #input_shape = (3, 401, 401)
     input_shape = (args.input_channels, args.height, args.width)
-    model = CNNModelBasic(input_shape)  # Instantiate the model first
+    model = DeeperCNNModel(input_shape)  # Instantiate the model first
     state_dict = torch.load(args.model_path)
     new_state_dict = {}
     for k, v in state_dict.items():
@@ -77,7 +77,7 @@ if __name__=="__main__":
     # get the width
     parser.add_argument('--width', type=int, default=401, help='Width of the input image')
     #output file of the results
-    parser.add_argument('--result_name', type=str, default='results', help='Output file name')
+    parser.add_argument('-o','--result_name', type=str, default='results', help='Output file name')
 
     args=parser.parse_args()
     main(args)
