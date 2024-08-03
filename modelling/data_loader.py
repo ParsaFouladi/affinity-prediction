@@ -5,10 +5,11 @@ import random
 import numpy as np
 
 class ProteinLigandTrain(Dataset):
-    def __init__(self, h5_file_path, transform=None):
+    def __init__(self, h5_file_path, transform=None,target_transform=None):
         self.h5_file = h5py.File(h5_file_path, 'r')
         self.group_names = list(self.h5_file.keys())
         self.transform = transform
+        self.target_transform=target_transform
 
     def __len__(self):
         return len(self.group_names)
@@ -22,10 +23,15 @@ class ProteinLigandTrain(Dataset):
 
         if self.transform:
             representation = self.transform(representation)
-        else:
+        if self.target_transform:
+            p_binding_affinity = self.target_transform(p_binding_affinity)
+
+        #else:
             # Ensure the representation is in the format (channels, height, width)
-            if representation.shape[-1] == 3:
-                representation = np.transpose(representation, (2, 0, 1))
+        if representation.shape[-1] == 3:
+            representation = np.transpose(representation, (2, 0, 1))
+        
+        p_binding_affinity = np.expand_dims(p_binding_affinity, axis=-1)
 
         # Convert to PyTorch tensors and return as float 32
 
