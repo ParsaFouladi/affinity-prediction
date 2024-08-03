@@ -30,8 +30,8 @@ def calculate_metrics(y_true, y_pred):
     """
 
     # convert to numpy arrays as float32
-    y_true = np.array(y_true, dtype=np.float32)
-    y_pred = np.array(y_pred, dtype=np.float32)
+    y_true = np.array(y_true, dtype=np.float32).ravel()
+    y_pred = np.array(y_pred, dtype=np.float32).ravel()
 
     
     mse = mean_squared_error(y_true, y_pred)
@@ -51,16 +51,37 @@ def calculate_metrics(y_true, y_pred):
         "Mean Absolute Error":mae,
         "Standard Deviation of Residuals": sd_residuals
     }
-def main(args):
+# Define the target normalization function
+def calculate_target_stats(dataset):
+    """Calculate the mean and standard deviation of the target variable."""
+    targets = []
+    for _, target in dataset:
+        targets.append(target.item())
+    targets = np.array(targets)
+    return np.mean(targets), np.std(targets)
+def normalize_target(target, mean, std):
+    return (target - mean) / std
+
+# Define the denormalization function (to be used during prediction)
+def denormalize_target(normalized_target, mean, std):
+    return normalized_target * std + mean
     #Initialize logger
+def main(args):
+    
     # put the time in the log file name to avoid overwriting in DDMMYYYY format
     # Get current date in DDMMYYYY format
     current_date = datetime.datetime.now().strftime("%d%m%Y")
 
     logging.basicConfig(filename=f'{args.log_file}_{current_date}.log', level=logging.INFO, 
                     format='%(asctime)s %(levelname)s:%(message)s')
-    # Data Loading
-    dataset = ProteinLigandTrain(args.data_path)
+    # pre_data = ProteinLigandTrain(args.data_path)
+    # mean, std = calculate_target_stats(pre_data)
+    # logging.info(f"Mean: {mean}, Std: {std}")
+    # pre_data.close()
+    # # Data Loading
+    # # add normalize the target values
+    # target_transform = lambda x: normalize_target(x, mean, std)
+    dataset = ProteinLigandTrain(args.data_path, target_transform=None)
     train_sampler, val_sampler = dataset.get_train_val_split(args.val_split, args.seed)
     logging.info(f"Training samples: {len(train_sampler)}")
 
@@ -74,7 +95,7 @@ def main(args):
 
     #input_shape = (3, 401, 401)
     input_shape = (args.input_channels, args.height, args.width)
-    model = DeeperCNNModel(input_shape).to(device)
+    model = CNNModelBasic(input_shape).to(device)
     if torch.cuda.device_count() > 1:
         print(f"Using {torch.cuda.device_count()} GPUs!")
         logging.info(f"Using {torch.cuda.device_count()} GPUs!")
@@ -82,7 +103,7 @@ def main(args):
     criterion = nn.MSELoss()  
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3, verbose=True)
 
     # TensorBoard for Logging
     writer = SummaryWriter(log_dir=args.log_dir)
@@ -152,7 +173,7 @@ def main(args):
                 # logging.info(f"Targets: {binding_affinities.cpu().numpy()}")
 
                 #all_preds.extend(outputs.cpu().numpy())
-                all_targets.extend(binding_affinities.cpu().numpy())
+                all_targets.extend(binding_affinities.cpu().numpy().ravel())
         
         # print all the predictions and targets
         logging.info(f"Predictions: {all_preds}")
