@@ -22,7 +22,7 @@ def main(args):
     # Load the model
     #input_shape = (3, 401, 401)
     input_shape = (args.input_channels, args.height, args.width)
-    model = DeeperCNNModel(input_shape)  # Instantiate the model first
+    model = CNNModelBasic(input_shape)  # Instantiate the model first
     state_dict = torch.load(args.model_path)
     new_state_dict = {}
     for k, v in state_dict.items():

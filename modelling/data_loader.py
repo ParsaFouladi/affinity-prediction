@@ -109,6 +109,8 @@ class ProteinLigandTest(Dataset):
 
         # Convert to PyTorch tensors and return as float 32
 
+        p_binding_affinity = np.expand_dims(p_binding_affinity, axis=-1)
+
         return torch.from_numpy(representation).float(), torch.tensor(p_binding_affinity).float(), group_name
     
     def head(self):
