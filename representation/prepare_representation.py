@@ -121,7 +121,7 @@ def create_representation(args):
             d_matrix = padding(distance_matrix(protein_coords, lignad_coords, protein_size=number_of_aa, residues_to_keep=residues_to_keep), max_length+1)
             w_matrix = padding(molecular_weight(protein_structure, ligand_mol, protein_size=number_of_aa, residues_to_keep=residues_to_keep), max_length+1)
             #v_matrix = padding(vdw_radius_mol(protein_structure, ligand_mol, van_dict, protein_size=number_of_aa, residues_to_keep=residues_to_keep), max_length+1)
-            rg_matrix = rg_mol(protein_structure, ligand_mol, protein_size=max_length, residues_to_keep=residues_to_keep)
+            rg_matrix = padding(rg_mol(protein_structure, ligand_mol, protein_size=number_of_aa, residues_to_keep=residues_to_keep), max_length+1)
         else:
             residues_to_keep = 'all'
             d_matrix = distance_matrix(protein_coords, lignad_coords, protein_size=max_length, residues_to_keep=residues_to_keep)
