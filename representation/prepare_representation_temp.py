@@ -109,27 +109,30 @@ def create_representation(args):
         lignad_coords = get_ligand_cordinates(ligand_mol)
         number_of_aa = protein_coords.shape[0]
 
-        # if outlier_threshold > 1000:
-        #     logging.info(f"Protein {pdb_code} has more than 1000 amino acids. Skipping...")
-        #     return None
+        if outlier_threshold > 1000:
+            logging.info(f"Protein {pdb_code} has more than 1000 amino acids. Skipping...")
+            return None
 
         if number_of_aa > max_length:
             residues_to_keep = truncation(protein_coords, lignad_coords, max_length=max_length)
             d_matrix = distance_matrix(protein_coords, lignad_coords, protein_size=max_length, residues_to_keep=residues_to_keep)
             w_matrix = molecular_weight(protein_structure, ligand_mol, protein_size=max_length, residues_to_keep=residues_to_keep)
-            v_matrix = vdw_radius_mol(protein_structure, ligand_mol, van_dict, protein_size=max_length, residues_to_keep=residues_to_keep)
+            #v_matrix = vdw_radius_mol(protein_structure, ligand_mol, van_dict, protein_size=max_length, residues_to_keep=residues_to_keep)
+            rg_matrix = rg_mol(protein_structure, ligand_mol, protein_size=max_length, residues_to_keep=residues_to_keep)
         elif number_of_aa < max_length:
             residues_to_keep = 'all'
             d_matrix = padding(distance_matrix(protein_coords, lignad_coords, protein_size=number_of_aa, residues_to_keep=residues_to_keep), max_length+1)
             w_matrix = padding(molecular_weight(protein_structure, ligand_mol, protein_size=number_of_aa, residues_to_keep=residues_to_keep), max_length+1)
-            v_matrix = padding(vdw_radius_mol(protein_structure, ligand_mol, van_dict, protein_size=number_of_aa, residues_to_keep=residues_to_keep), max_length+1)
+            #v_matrix = padding(vdw_radius_mol(protein_structure, ligand_mol, van_dict, protein_size=number_of_aa, residues_to_keep=residues_to_keep), max_length+1)
+            rg_matrix = padding(rg_mol(protein_structure, ligand_mol, protein_size=number_of_aa, residues_to_keep=residues_to_keep), max_length+1)
         else:
             residues_to_keep = 'all'
             d_matrix = distance_matrix(protein_coords, lignad_coords, protein_size=max_length, residues_to_keep=residues_to_keep)
             w_matrix = molecular_weight(protein_structure, ligand_mol, protein_size=max_length, residues_to_keep=residues_to_keep)
-            v_matrix = vdw_radius_mol(protein_structure, ligand_mol, van_dict, protein_size=max_length, residues_to_keep=residues_to_keep)
+            #v_matrix = vdw_radius_mol(protein_structure, ligand_mol, van_dict, protein_size=max_length, residues_to_keep=residues_to_keep)
+            rg_matrix = rg_mol(protein_structure, ligand_mol, protein_size=max_length, residues_to_keep=residues_to_keep)
 
-        stacked_matrix = np.stack((d_matrix, w_matrix, v_matrix), axis=-1)
+        stacked_matrix = np.stack((d_matrix, w_matrix, rg_matrix), axis=-1)
         representation = normalize_data(stacked_matrix)
         binding_affinity, binding_unit, binding_type, resolution, p_binding_affinity, ligand_name = get_binding_affinity_info(pdb_code, df)
 
