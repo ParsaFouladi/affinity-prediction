@@ -95,7 +95,11 @@ def main(args):
 
     #input_shape = (3, 401, 401)
     input_shape = (args.input_channels, args.height, args.width)
-    model = CNNModelBasic(input_shape).to(device)
+    if args.model_type == 'basic':
+        model = CNNModelBasic(input_shape).to(device)
+    elif args.model_type == 'deeper':
+        model = DeeperCNNModel(input_shape).to(device)
+    #model = CNNModelBasic(input_shape).to(device)
     if torch.cuda.device_count() > 1:
         print(f"Using {torch.cuda.device_count()} GPUs!")
         logging.info(f"Using {torch.cuda.device_count()} GPUs!")
@@ -103,7 +107,7 @@ def main(args):
     criterion = nn.MSELoss()  
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.2, patience=7, verbose=True,min_lr=5e-6)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.2, patience=10, verbose=True,min_lr=5e-6)
 
     # TensorBoard for Logging
     writer = SummaryWriter(log_dir=args.log_dir)
@@ -225,6 +229,8 @@ if __name__ == "__main__":
     parser.add_argument('-w','--width', type=int, default=401, help='Width of the input image')
     #output name
     parser.add_argument('-o','--output_name', type=str, default='model', help='Name of the output model')
+    # model type
+    parser.add_argument('--model_type', type=str, default='basic', help='Type of model to use')
 
     args = parser.parse_args()
     main(args)
