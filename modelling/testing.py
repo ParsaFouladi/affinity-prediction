@@ -22,7 +22,13 @@ def main(args):
     # Load the model
     #input_shape = (3, 401, 401)
     input_shape = (args.input_channels, args.height, args.width)
-    model = CNNModelBasic(input_shape)  # Instantiate the model first
+    if args.model_type == 'basic':
+        model = CNNModelBasic(input_shape)
+    elif args.model_type == 'deeper':
+        model = DeeperCNNModel(input_shape)
+    else:
+        raise ValueError("Invalid model type. Choose from 'basic' or 'deeper'.")
+    #model = CNNModelBasic(input_shape)  # Instantiate the model first
     state_dict = torch.load(args.model_path)
     new_state_dict = {}
     for k, v in state_dict.items():
@@ -78,6 +84,8 @@ if __name__=="__main__":
     parser.add_argument('--width', type=int, default=401, help='Width of the input image')
     #output file of the results
     parser.add_argument('-o','--result_name', type=str, default='results', help='Output file name')
+    # model type
+    parser.add_argument('--model_type', type=str, default='basic', help='Type of model to use')
 
     args=parser.parse_args()
     main(args)
