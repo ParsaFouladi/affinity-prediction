@@ -258,39 +258,40 @@ class VGG16(nn.Module):
         self.fc14 = nn.Linear(flatten_size, 4096)
         self.fc15 = nn.Linear(4096, 4096)
         self.fc16 = nn.Linear(4096, 1)
-    
+        
+        # Apply Kaiming/He Initialization
+        self._initialize_weights()
+
     def _flatten_size(self, input_shape):
-        block1 =input_shape[1]
-        pool1 =math.ceil((block1-3)/2 +1)
-        #print(pool1)
+        block1 = input_shape[1]
+        pool1 = math.ceil((block1 - 3) / 2 + 1)
 
+        block2 = pool1
+        pool2 = math.ceil((block2 - 3) / 2 + 1)
 
-        block2=pool1
+        block3 = pool2
+        pool3 = math.ceil((block3 - 3) / 2 + 1)
 
-        pool2 =math.ceil((block2-3)/2 +1)
-        #print(pool2)
+        block4 = pool3
+        pool4 = math.ceil((block4 - 3) / 2 + 1)
 
+        block5 = pool4
+        pool5 = math.ceil((block5 - 3) / 2 + 1)
 
-
-        block3=pool2
-        pool3 =math.ceil((block3-3)/2 +1)
-        #print(pool3)
-
-
-        block4=pool3
-        pool4 =math.ceil((block4-3)/2 +1)
-        #print(pool4)
-
-
-        block5=pool4
-        pool5 =math.ceil((block5-3)/2 +1)
-        #print(pool5)
-
-
-        #After flatten 
-        flatten_size= pool5 * pool5 * 512
+        # After flatten 
+        flatten_size = pool5 * pool5 * 512
 
         return flatten_size
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.Linear):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.zeros_(m.bias)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -313,7 +314,7 @@ class VGG16(nn.Module):
         x = self.maxpool(x)
         x = x.reshape(x.shape[0], -1)
         x = F.relu(self.fc14(x))
-        x = F.dropout(x, 0.5) #dropout was included to combat overfitting
+        x = F.dropout(x, 0.5)  # Dropout was included to combat overfitting
         x = F.relu(self.fc15(x))
         x = F.dropout(x, 0.5)
         x = self.fc16(x)
