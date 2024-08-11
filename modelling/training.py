@@ -1,5 +1,5 @@
 from data_loader import ProteinLigandTrain, ProteinLigandTest
-from model_logic import CNNModelBasic,DeeperCNNModel
+from model_logic import CNNModelBasic,DeeperCNNModel,VGG16
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -99,6 +99,8 @@ def main(args):
         model = CNNModelBasic(input_shape).to(device)
     elif args.model_type == 'deeper':
         model = DeeperCNNModel(input_shape).to(device)
+    elif args.model_type == 'VGG16':
+        model = VGG16(input_shape=input_shape).to(device)
     #model = CNNModelBasic(input_shape).to(device)
     if torch.cuda.device_count() > 1:
         print(f"Using {torch.cuda.device_count()} GPUs!")
@@ -230,7 +232,7 @@ if __name__ == "__main__":
     #output name
     parser.add_argument('-o','--output_name', type=str, default='model', help='Name of the output model')
     # model type
-    parser.add_argument('--model_type', type=str, default='basic', help='Type of model to use')
+    parser.add_argument('-m','--model_type', type=str, default='basic', help='Type of model to use')
 
     args = parser.parse_args()
     main(args)
