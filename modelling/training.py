@@ -109,7 +109,7 @@ def main(args):
     criterion = nn.MSELoss()  
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.2, patience=14, verbose=True,min_lr=4e-5)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.2, patience=16, verbose=True,min_lr=4e-5)
 
     # TensorBoard for Logging
     writer = SummaryWriter(log_dir=args.log_dir)
