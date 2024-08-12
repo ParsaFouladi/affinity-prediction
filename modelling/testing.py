@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from data_loader import ProteinLigandTest  
-from model_logic import CNNModelBasic,DeeperCNNModel     
+from model_logic import CNNModelBasic,DeeperCNNModel,VGG16     
 from training import calculate_metrics
 import logging
 import argparse
@@ -21,11 +21,14 @@ def main(args):
 
     # Load the model
     #input_shape = (3, 401, 401)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     input_shape = (args.input_channels, args.height, args.width)
     if args.model_type == 'basic':
-        model = CNNModelBasic(input_shape)
+        model = CNNModelBasic(input_shape).to(device)
     elif args.model_type == 'deeper':
-        model = DeeperCNNModel(input_shape)
+        model = DeeperCNNModel(input_shape).to(device)
+    elif args.model_type == 'VGG16':
+        model = VGG16(input_shape=input_shape).to(device)
     else:
         raise ValueError("Invalid model type. Choose from 'basic' or 'deeper'.")
     #model = CNNModelBasic(input_shape)  # Instantiate the model first
@@ -37,7 +40,7 @@ def main(args):
         else:
             new_state_dict[k] = v
     model.load_state_dict(state_dict=new_state_dict)  # Load model state dictionary
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
     model.to(device) 
     model.eval() 
 
@@ -85,7 +88,7 @@ if __name__=="__main__":
     #output file of the results
     parser.add_argument('-o','--result_name', type=str, default='results', help='Output file name')
     # model type
-    parser.add_argument('--model_type', type=str, default='basic', help='Type of model to use')
+    parser.add_argument('-m','--model_type', type=str, default='basic', help='Type of model to use')
 
     args=parser.parse_args()
     main(args)
