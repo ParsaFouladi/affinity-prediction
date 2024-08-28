@@ -3,7 +3,7 @@ import numpy as np
 from torch.utils.data import DataLoader
 from data_loader import ProteinLigandTest  
 from model_logic import CNNModelBasic,DeeperCNNModel,VGG16     
-from training import calculate_metrics
+from evaluation_statistics import calculate_metrics
 import logging
 import argparse
 import datetime
