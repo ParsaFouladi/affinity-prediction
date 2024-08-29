@@ -24,46 +24,84 @@ def main(args):
     
     # Model, Loss, and Optimizer
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logging.info(f"Using {device} for training")
+    # logging.info(f"Using {device} for training")
     
-    #input_shape = (3, 401, 401)
-    input_shape = (args.input_channels, args.height, args.width)
-    if args.model_type == 'basic':
-        model = CNNModelBasic(input_shape).to(device)
-    elif args.model_type == 'deeper':
-        model = DeeperCNNModel(input_shape).to(device)
-    elif args.model_type == 'VGG16':
-        model = VGG16(input_shape=input_shape).to(device)
-    #model = CNNModelBasic(input_shape).to(device)
-    if torch.cuda.device_count() > 1:
-        print(f"Using {torch.cuda.device_count()} GPUs!")
-        logging.info(f"Using {torch.cuda.device_count()} GPUs!")
-        model = nn.DataParallel(model)  # Use DataParallel for multi-GPU training
+    # #input_shape = (3, 401, 401)
+    # input_shape = (args.input_channels, args.height, args.width)
+    # if args.model_type == 'basic':
+    #     model = CNNModelBasic(input_shape).to(device)
+    # elif args.model_type == 'deeper':
+    #     model = DeeperCNNModel(input_shape).to(device)
+    # elif args.model_type == 'VGG16':
+    #     model = VGG16(input_shape=input_shape).to(device)
+    # #model = CNNModelBasic(input_shape).to(device)
+    # if torch.cuda.device_count() > 1:
+    #     print(f"Using {torch.cuda.device_count()} GPUs!")
+    #     logging.info(f"Using {torch.cuda.device_count()} GPUs!")
+    #     model = nn.DataParallel(model)  # Use DataParallel for multi-GPU training
     
-    state_dict = torch.load(args.model_path)
-    new_state_dict = {}
-    for k, v in state_dict.items():
-        if k.startswith('module.'):
-            new_state_dict[k[7:]] = v  # Remove the 'module.' prefix
-        else:
-            new_state_dict[k] = v
-    model.load_state_dict(state_dict=new_state_dict)  # Load model state dictionary
-    model.train()
+    # state_dict = torch.load(args.model_path)
+    # new_state_dict = {}
+    # for k, v in state_dict.items():
+    #     if k.startswith('module.'):
+    #         new_state_dict[k[7:]] = v  # Remove the 'module.' prefix
+    #     else:
+    #         new_state_dict[k] = v
+    # model.load_state_dict(state_dict=new_state_dict)  # Load model state dictionary
+    # model.train()
 
-    criterion = nn.MSELoss()  
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    # criterion = nn.MSELoss()  
+    # optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.2, patience=16, verbose=True,min_lr=4e-5)
+    # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.2, patience=16, verbose=True,min_lr=4e-5)
 
-    # TensorBoard for Logging
-    writer = SummaryWriter(log_dir=args.log_dir)
+    # # TensorBoard for Logging
+    # writer = SummaryWriter(log_dir=args.log_dir)
 
     train_dataset = ProteinLigandTrain(args.data_path)
     # Initialize the k-fold cross validation
     kf = KFold(n_splits=args.kfolds, shuffle=True)
 
     for fold, (train_index, val_index) in enumerate(kf.split(train_dataset)):
+        logging.info(f"Using {device} for training")
+    
+        #input_shape = (3, 401, 401)
+        input_shape = (args.input_channels, args.height, args.width)
+        if args.model_type == 'basic':
+            model = CNNModelBasic(input_shape).to(device)
+        elif args.model_type == 'deeper':
+            model = DeeperCNNModel(input_shape).to(device)
+        elif args.model_type == 'VGG16':
+            model = VGG16(input_shape=input_shape).to(device)
+        #model = CNNModelBasic(input_shape).to(device)
+        if torch.cuda.device_count() > 1:
+            print(f"Using {torch.cuda.device_count()} GPUs!")
+            logging.info(f"Using {torch.cuda.device_count()} GPUs!")
+            model = nn.DataParallel(model)  # Use DataParallel for multi-GPU training
+        
+        state_dict = torch.load(args.model_path)
+        new_state_dict = {}
+        for k, v in state_dict.items():
+            if k.startswith('module.'):
+                new_state_dict[k[7:]] = v  # Remove the 'module.' prefix
+            else:
+                new_state_dict[k] = v
+        model.load_state_dict(state_dict=new_state_dict)  # Load model state dictionary
+        model.train()
+        criterion = nn.MSELoss()  
+        optimizer = optim.Adam(model.parameters(), lr=args.lr)
+
+        #scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.2, patience=16, verbose=True,min_lr=4e-5)
+
+        # TensorBoard for Logging
+        writer = SummaryWriter(log_dir=args.log_dir)
+        # restart the model for each fold
+
+
         logging.info(f"Fold {fold + 1} Started")
+        # Create a dictionary for keeping track of the metrics
+        results_dict = {}
+
         train_loader=DataLoader(train_dataset, batch_size=args.batch_size, sampler=train_index)
         val_loader=DataLoader(train_dataset, batch_size=args.batch_size, sampler=val_index)
 
@@ -145,6 +183,11 @@ def main(args):
             val_metrics = calculate_metrics(np.array(all_targets), np.array(all_preds))
             # Log validation metrics to TensorBoard
             for metric_name, metric_value in val_metrics.items():
+                # Get the metrics in the last epoch
+                if epoch == args.epochs - 1:
+                    # Increase each metric by the value in the dictionary
+                    results_dict[metric_name] = results_dict.get(metric_name, 0) + metric_value
+                
                 logging.info(f"Validation {metric_name}: {metric_value}")
                 writer.add_scalar(f"Metrics/Validation/{metric_name}", metric_value, epoch)
 
@@ -152,20 +195,21 @@ def main(args):
             logging.info(f"Epoch {epoch + 1}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
 
             # Step the scheduler
-            scheduler.step(val_loss)
+            #scheduler.step(val_loss)
 
             for param_group in optimizer.param_groups:
                 logging.info(f"Learning rate at epoch {epoch+1} is: {param_group['lr']}")
                 writer.add_scalar('Learning Rate', param_group['lr'], epoch+1)
 
-            logging.info(f"Fold {fold + 1} Completed")
-            # Show the average metrics for the fold
-            logging.info(f"Average Metrics for Fold {fold + 1}: {Counter(val_metrics)}")
-            
-
+        logging.info(f"Fold {fold + 1} Completed")
+        
+       
         writer.close()
 
-
+    # Calculate the average metrics for all the folds
+    for metric_name in results_dict:
+        results_dict[metric_name] /= args.kfolds
+    logging.info(f"Average Metrics: {results_dict}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Protein-Ligand Binding Affinity Prediction Transfer Learning')
