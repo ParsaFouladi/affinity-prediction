@@ -3,35 +3,9 @@ import sys
 import os
 from multiprocessing import Pool, cpu_count
 import logging
-
-# Configure logging to write to a text file
-logging.basicConfig(filename='docking_log.log', level=logging.INFO, 
-                    format='%(asctime)s %(levelname)s:%(message)s')
+import argparse
 
 
-
-# Define paths to the folders containing receptors and ligands
-receptor_folder = sys.argv[1]
-ligand_folder = sys.argv[2]
-output_folder = sys.argv[3]
-
-# Get a list of receptor and ligand files
-receptor_files = [os.path.join(receptor_folder, file) for file in os.listdir(receptor_folder) if file.endswith('.pdbqt')]
-ligand_files = [os.path.join(ligand_folder, file) for file in os.listdir(ligand_folder) if file.endswith('.pdbqt')]
-
-# Remove spaces from the file names
-for i in range(len(receptor_files)):
-    new_name = receptor_files[i].replace(" ", "_")
-    os.rename(receptor_files[i], new_name)
-    receptor_files[i] = new_name
-for i in range(len(ligand_files)):
-    new_name = ligand_files[i].replace(" ", "_")
-    os.rename(ligand_files[i], new_name)
-    ligand_files[i] = new_name
-
-# Print number of total pairs which is number of receptors * number of ligands
-total_pairs = len(receptor_files) * len(ligand_files)
-logging.info(f"Number of total pairs: {total_pairs}")
 
 def dock_pair(pair):
     receptor_file, ligand_file, output_folder = pair
@@ -55,7 +29,36 @@ def dock_pair(pair):
         logging.error(f"Error docking {receptor_file} with {ligand_file}: {e}")
         return None
 
-if __name__ == "__main__":
+def main(args):
+    # Configure logging to write to a text file
+    logging.basicConfig(filename='docking_log.log', level=logging.INFO, 
+                        format='%(asctime)s %(levelname)s:%(message)s')
+
+
+
+    # Define paths to the folders containing receptors and ligands
+    receptor_folder = args.receptor_folder
+    ligand_folder = args.ligand_folder
+    output_folder = args.output_folder
+
+    # Get a list of receptor and ligand files
+    receptor_files = [os.path.join(receptor_folder, file) for file in os.listdir(receptor_folder) if file.endswith('.pdbqt')]
+    ligand_files = [os.path.join(ligand_folder, file) for file in os.listdir(ligand_folder) if file.endswith('.pdbqt')]
+
+    # Remove spaces from the file names
+    for i in range(len(receptor_files)):
+        new_name = receptor_files[i].replace(" ", "_")
+        os.rename(receptor_files[i], new_name)
+        receptor_files[i] = new_name
+    for i in range(len(ligand_files)):
+        new_name = ligand_files[i].replace(" ", "_")
+        os.rename(ligand_files[i], new_name)
+        ligand_files[i] = new_name
+
+    # Print number of total pairs which is number of receptors * number of ligands
+    total_pairs = len(receptor_files) * len(ligand_files)
+    logging.info(f"Number of total pairs: {total_pairs}")
+
     pairs = [(receptor_file, ligand_file, output_folder) for receptor_file in receptor_files for ligand_file in ligand_files]
     num_processes = cpu_count()
     number_of_docked_pairs = 0
@@ -69,3 +72,13 @@ if __name__ == "__main__":
                 logging.info(f'Docking pair {number_of_docked_pairs} of {total_pairs} is finished.')
 
     logging.info('All docking tasks are complete.')
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Create protein-ligand representations")
+    parser.add_argument("--receptor_folder", type=str,help="Path to the folder containing receptor files")
+    parser.add_argument("--ligand_folder", type=str, help="Path to the folder containing ligand files")
+    parser.add_argument("--output_folder", type=str, help="Path to the output folder")
+    args = parser.parse_args()
+
+    main(args)
+    
