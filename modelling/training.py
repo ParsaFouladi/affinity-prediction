@@ -1,5 +1,5 @@
 from data_loader import ProteinLigandTrain, ProteinLigandTest
-from model_logic import CNNModelBasic,DeeperCNNModel,VGG16
+from model_logic import CNNModelBasic,DeeperCNNModel,VGG16,ResNet34
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -48,6 +48,8 @@ def main(args):
         model = DeeperCNNModel(input_shape).to(device)
     elif args.model_type == 'VGG16':
         model = VGG16(input_shape=input_shape).to(device)
+    elif args.model_type == 'ResNet34':
+        model = ResNet34(input_shape=input_shape).to(device)
     #model = CNNModelBasic(input_shape).to(device)
     if torch.cuda.device_count() > 1:
         print(f"Using {torch.cuda.device_count()} GPUs!")

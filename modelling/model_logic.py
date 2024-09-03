@@ -320,123 +320,228 @@ class VGG16(nn.Module):
         x = self.fc16(x)
         return x
 
+class BasicBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, stride=1, downsample=None):
+        super(BasicBlock, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.downsample = downsample
+        self.stride = stride
 
-class VGG16_2(nn.Module):
-    def __init__(self, input_shape,num_outputs=1):  # Default is 1 output for regression
-        super(VGG16_2, self).__init__()
-        
-        # Define the convolutional layers
-        self.features = nn.Sequential(
-            # Block 1
-            nn.Conv2d(3, 64, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(64, 64, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+    def forward(self, x):
+        identity = x
 
-            # Block 2
-            nn.Conv2d(64, 128, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(128, 128, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = F.relu(out)
 
-            # Block 3
-            nn.Conv2d(128, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(256, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(256, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+        out = self.conv2(out)
+        out = self.bn2(out)
 
-            # Block 4
-            nn.Conv2d(256, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+        if self.downsample is not None:
+            identity = self.downsample(x)
 
-            # Block 5
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-        )
+        out += identity
+        out = F.relu(out)
+
+        return out
+
+class ResNet34(nn.Module):
+    def __init__(self, input_shape):
+        super(ResNet34, self).__init__()
+        self.in_channels = 64
+
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.bn1 = nn.BatchNorm2d(64)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
+        self.layer1 = self._make_layer(BasicBlock, 64, 3)
+        self.layer2 = self._make_layer(BasicBlock, 128, 4, stride=2)
+        self.layer3 = self._make_layer(BasicBlock, 256, 6, stride=2)
+        self.layer4 = self._make_layer(BasicBlock, 512, 3, stride=2)
 
         flatten_size = self._flatten_size(input_shape)
 
-        # Define the fully connected layers for regression
-        self.classifier = nn.Sequential(
-            nn.Linear(flatten_size, 4096),
-            nn.ReLU(inplace=True),
-            nn.Dropout(),
-            nn.Linear(4096, 4096),
-            nn.ReLU(inplace=True),
-            nn.Dropout(),
-            nn.Linear(4096, num_outputs),  # Output a single value (or more if multivariate regression)
-        )
+        self.fc = nn.Linear(flatten_size, 1)
         
-        # Initialize weights
+        # Apply Kaiming/He Initialization
         self._initialize_weights()
-    
+
+    def _make_layer(self, block, out_channels, blocks, stride=1):
+        downsample = None
+        if stride != 1 or self.in_channels != out_channels:
+            downsample = nn.Sequential(
+                nn.Conv2d(self.in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(out_channels),
+            )
+
+        layers = []
+        layers.append(block(self.in_channels, out_channels, stride, downsample))
+        self.in_channels = out_channels
+        for _ in range(1, blocks):
+            layers.append(block(self.in_channels, out_channels))
+
+        return nn.Sequential(*layers)
+
     def _flatten_size(self, input_shape):
-        block1 =input_shape[1]
-        pool1 =math.ceil((block1-3)/2 +1)
-        #print(pool1)
+        x = torch.zeros(1, *input_shape)
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = F.relu(x)
+        x = self.maxpool(x)
 
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
 
-        block2=pool1
-
-        pool2 =math.ceil((block2-3)/2 +1)
-        #print(pool2)
-
-
-
-        block3=pool2
-        pool3 =math.ceil((block3-3)/2 +1)
-        #print(pool3)
-
-
-        block4=pool3
-        pool4 =math.ceil((block4-3)/2 +1)
-        #print(pool4)
-
-
-        block5=pool4
-        pool5 =math.ceil((block5-3)/2 +1)
-        #print(pool5)
-
-
-        #After flatten 
-        flatten_size= pool5 * pool5 * 512
+        x = F.adaptive_avg_pool2d(x, (1, 1))
+        flatten_size = x.numel()
 
         return flatten_size
-
-    def forward(self, x):
-        x = self.features(x)
-        x = x.view(x.size(0), -1)  # Flatten the tensor
-        x = self.classifier(x)
-        return x
 
     def _initialize_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.Linear):
-                nn.init.normal_(m.weight, 0, 0.01)
-                nn.init.constant_(m.bias, 0)
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.zeros_(m.bias)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = F.relu(x)
+        x = self.maxpool(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        x = F.adaptive_avg_pool2d(x, (1, 1))
+        x = torch.flatten(x, 1)
+        x = self.fc(x)
+        return x
+
+# class VGG16_2(nn.Module):
+#     def __init__(self, input_shape,num_outputs=1):  # Default is 1 output for regression
+#         super(VGG16_2, self).__init__()
+        
+#         # Define the convolutional layers
+#         self.features = nn.Sequential(
+#             # Block 1
+#             nn.Conv2d(3, 64, kernel_size=3, padding=1),
+#             nn.ReLU(inplace=True),
+#             nn.Conv2d(64, 64, kernel_size=3, padding=1),
+#             nn.ReLU(inplace=True),
+#             nn.MaxPool2d(kernel_size=2, stride=2),
+
+#             # Block 2
+#             nn.Conv2d(64, 128, kernel_size=3, padding=1),
+#             nn.ReLU(inplace=True),
+#             nn.Conv2d(128, 128, kernel_size=3, padding=1),
+#             nn.ReLU(inplace=True),
+#             nn.MaxPool2d(kernel_size=2, stride=2),
+
+#             # Block 3
+#             nn.Conv2d(128, 256, kernel_size=3, padding=1),
+#             nn.ReLU(inplace=True),
+#             nn.Conv2d(256, 256, kernel_size=3, padding=1),
+#             nn.ReLU(inplace=True),
+#             nn.Conv2d(256, 256, kernel_size=3, padding=1),
+#             nn.ReLU(inplace=True),
+#             nn.MaxPool2d(kernel_size=2, stride=2),
+
+#             # Block 4
+#             nn.Conv2d(256, 512, kernel_size=3, padding=1),
+#             nn.ReLU(inplace=True),
+#             nn.Conv2d(512, 512, kernel_size=3, padding=1),
+#             nn.ReLU(inplace=True),
+#             nn.Conv2d(512, 512, kernel_size=3, padding=1),
+#             nn.ReLU(inplace=True),
+#             nn.MaxPool2d(kernel_size=2, stride=2),
+
+#             # Block 5
+#             nn.Conv2d(512, 512, kernel_size=3, padding=1),
+#             nn.ReLU(inplace=True),
+#             nn.Conv2d(512, 512, kernel_size=3, padding=1),
+#             nn.ReLU(inplace=True),
+#             nn.Conv2d(512, 512, kernel_size=3, padding=1),
+#             nn.ReLU(inplace=True),
+#             nn.MaxPool2d(kernel_size=2, stride=2),
+#         )
+
+#         flatten_size = self._flatten_size(input_shape)
+
+#         # Define the fully connected layers for regression
+#         self.classifier = nn.Sequential(
+#             nn.Linear(flatten_size, 4096),
+#             nn.ReLU(inplace=True),
+#             nn.Dropout(),
+#             nn.Linear(4096, 4096),
+#             nn.ReLU(inplace=True),
+#             nn.Dropout(),
+#             nn.Linear(4096, num_outputs),  # Output a single value (or more if multivariate regression)
+#         )
+        
+#         # Initialize weights
+#         self._initialize_weights()
+    
+#     def _flatten_size(self, input_shape):
+#         block1 =input_shape[1]
+#         pool1 =math.ceil((block1-3)/2 +1)
+#         #print(pool1)
+
+
+#         block2=pool1
+
+#         pool2 =math.ceil((block2-3)/2 +1)
+#         #print(pool2)
 
 
 
+#         block3=pool2
+#         pool3 =math.ceil((block3-3)/2 +1)
+#         #print(pool3)
+
+
+#         block4=pool3
+#         pool4 =math.ceil((block4-3)/2 +1)
+#         #print(pool4)
+
+
+#         block5=pool4
+#         pool5 =math.ceil((block5-3)/2 +1)
+#         #print(pool5)
+
+
+#         #After flatten 
+#         flatten_size= pool5 * pool5 * 512
+
+#         return flatten_size
+
+#     def forward(self, x):
+#         x = self.features(x)
+#         x = x.view(x.size(0), -1)  # Flatten the tensor
+#         x = self.classifier(x)
+#         return x
+
+#     def _initialize_weights(self):
+#         for m in self.modules():
+#             if isinstance(m, nn.Conv2d):
+#                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+#                 if m.bias is not None:
+#                     nn.init.constant_(m.bias, 0)
+#             elif isinstance(m, nn.BatchNorm2d):
+#                 nn.init.constant_(m.weight, 1)
+#                 nn.init.constant_(m.bias, 0)
+#             elif isinstance(m, nn.Linear):
+#                 nn.init.normal_(m.weight, 0, 0.01)
+#                 nn.init.constant_(m.bias, 0)
 
