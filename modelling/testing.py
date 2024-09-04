@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from data_loader import ProteinLigandTest  
-from model_logic import CNNModelBasic,DeeperCNNModel,VGG16     
+from model_logic import CNNModelBasic,DeeperCNNModel,VGG16,ResNet34
 from evaluation_statistics import calculate_metrics
 import logging
 import argparse
@@ -29,6 +29,8 @@ def main(args):
         model = DeeperCNNModel(input_shape).to(device)
     elif args.model_type == 'VGG16':
         model = VGG16(input_shape=input_shape).to(device)
+    elif args.model_type == 'ResNet34':
+        model = ResNet34(input_shape=input_shape).to(device)
     else:
         raise ValueError("Invalid model type. Choose from 'basic' or 'deeper'.")
     #model = CNNModelBasic(input_shape)  # Instantiate the model first
