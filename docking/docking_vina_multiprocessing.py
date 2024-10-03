@@ -4,7 +4,7 @@ import os
 from multiprocessing import Pool, cpu_count
 import logging
 import argparse
-
+import datetime
 
 
 def dock_pair(pair):
@@ -16,7 +16,7 @@ def dock_pair(pair):
         v = Vina(sf_name='vina')
         v.set_receptor(receptor_file)
         v.set_ligand_from_file(ligand_file)
-        v.compute_vina_maps(center=[11, -9, 3], box_size=[20, 20, 20])
+        v.compute_vina_maps(center=[5, 2, -15], box_size=[20, 20, 20])
 
         v.dock(exhaustiveness=32, n_poses=20)
         output_filename = '{}_{}_vina_out.pdbqt'.format(receptor_name, ligand_name)
@@ -31,7 +31,8 @@ def dock_pair(pair):
 
 def main(args):
     # Configure logging to write to a text file
-    logging.basicConfig(filename='docking_log.log', level=logging.INFO, 
+    current_date = datetime.datetime.now().strftime("%d%m%Y")
+    logging.basicConfig(filename=f'docking_log_{current_date}.log', level=logging.INFO, 
                         format='%(asctime)s %(levelname)s:%(message)s')
 
 
@@ -78,6 +79,8 @@ if __name__ == "__main__":
     parser.add_argument("--receptor_folder", type=str,help="Path to the folder containing receptor files")
     parser.add_argument("--ligand_folder", type=str, help="Path to the folder containing ligand files")
     parser.add_argument("--output_folder", type=str, help="Path to the output folder")
+    # exhaustiveness
+    parser.add_argument("--exhaustiveness", "-e",type=int, default=32, help="Exhaustiveness parameter for Vina")
     args = parser.parse_args()
 
     main(args)
