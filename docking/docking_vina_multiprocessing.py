@@ -8,7 +8,7 @@ import datetime
 
 
 def dock_pair(pair):
-    receptor_file, ligand_file, output_folder = pair
+    receptor_file, ligand_file, output_folder,exhaustiveness = pair
     try:
         receptor_name = os.path.splitext(os.path.basename(receptor_file))[0]
         ligand_name = os.path.splitext(os.path.basename(ligand_file))[0]
@@ -17,8 +17,8 @@ def dock_pair(pair):
         v.set_receptor(receptor_file)
         v.set_ligand_from_file(ligand_file)
         v.compute_vina_maps(center=[5, 2, -15], box_size=[20, 20, 20])
-
-        v.dock(exhaustiveness=32, n_poses=20)
+        
+        v.dock(exhaustiveness=exhaustiveness, n_poses=20)
         output_filename = '{}_{}_vina_out.pdbqt'.format(receptor_name, ligand_name)
         output_filepath = os.path.join(output_folder, output_filename)
         v.write_poses(output_filepath, n_poses=1, overwrite=True)
@@ -41,6 +41,7 @@ def main(args):
     receptor_folder = args.receptor_folder
     ligand_folder = args.ligand_folder
     output_folder = args.output_folder
+    exhaustiveness = args.exhaustiveness
 
     # Get a list of receptor and ligand files
     receptor_files = [os.path.join(receptor_folder, file) for file in os.listdir(receptor_folder) if file.endswith('.pdbqt')]
@@ -60,7 +61,7 @@ def main(args):
     total_pairs = len(receptor_files) * len(ligand_files)
     logging.info(f"Number of total pairs: {total_pairs}")
 
-    pairs = [(receptor_file, ligand_file, output_folder) for receptor_file in receptor_files for ligand_file in ligand_files]
+    pairs = [(receptor_file, ligand_file, output_folder,exhaustiveness) for receptor_file in receptor_files for ligand_file in ligand_files]
     num_processes = cpu_count()
     number_of_docked_pairs = 0
 
