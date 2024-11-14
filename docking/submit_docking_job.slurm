@@ -7,7 +7,7 @@
 #SBATCH --nodes=1                # Number of nodes requested
 #SBATCH --mem=1G                       # Total memory per node
 #SBATCH --partition=batch                # Partition name
-#SBATCH --time=06:00:00
+#SBATCH --time=03:00:00
 
 # Load any necessary modules (if required)
 # module load autodock_vina  # Uncomment and adjust if necessary
@@ -21,4 +21,4 @@ source activate vina
 #OUTPUT_FOLDER="/mainfs/home/mk6n23/mkdata/docked_complexes/mr_results2"
 
 # Run the Python script
-python3 docking_vina_multiprocessing.py --receptor_folder /mainfs/home/mk6n23/new_enviroment_parsa/data/ten_proteins/ --ligand_folder /mainfs/home/mk6n23/new_enviroment_parsa/data/cortisol/ --output_folder /mainfs/home/mk6n23/new_enviroment_parsa/data/results/sheet2_10_e128_5/ -e 128
+python3 docking_autodock_vina.py --receptor_folder /mainfs/home/mk6n23/new_enviroment_parsa/data/ten_proteins/ --ligand_folder /mainfs/home/mk6n23/new_enviroment_parsa/data/cortisol/ --output_folder /mainfs/home/mk6n23/new_enviroment_parsa/data/results/test_opts/ -e 32 --center 5 2 -15 -b 20 20 20 -n 39
